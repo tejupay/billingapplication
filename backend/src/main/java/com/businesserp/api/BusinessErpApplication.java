@@ -86,7 +86,7 @@ public class BusinessErpApplication {
                         .active(true)
                         .build();
 
-                userRepo.saveAll(List.of(owner, ownerAlt));
+                userRepo.saveAll(List.of(admin, owner, ownerAlt));
 
                 // 3. Seed Categories & Brands
                 Category catElectronics = categoryRepo.save(Category.builder().name("Electronics & Gadgets").tenant(tenant).build());

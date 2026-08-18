@@ -1,0 +1,37 @@
+{
+  "name": "TejuPay",
+  "short_name": "TejuPay",
+  "description": "Smart GST Billing & Business Management Platform",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#0f172a",
+  "theme_color": "#1e3a8a",
+  "orientation": "portrait-primary",
+  "lang": "en-IN",
+  "categories": ["business", "finance", "productivity"],
+  "icons": [
+    {
+      "src": "/tejupay-logo.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/tejupay-logo.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    }
+  ],
+  "screenshots": [],
+  "shortcuts": [
+    {
+      "name": "Create Invoice",
+      "short_name": "New Invoice",
+      "description": "Open billing screen to create a new GST invoice",
+      "url": "/?action=new-invoice",
+      "icons": [{ "src": "/tejupay-logo.svg", "sizes": "any" }]
+    }
+  ]
+}

@@ -3,7 +3,7 @@ services:
     name: business-erp-backend
     runtime: docker
     plan: free
-    dockerfilePath: ./backend/Dockerfile
+    dockerfilePath: Dockerfile
     dockerContext: ./backend
     envVars:
       - key: SPRING_PROFILES_ACTIVE
@@ -15,7 +15,7 @@ services:
     name: business-erp-frontend
     runtime: docker
     plan: free
-    dockerfilePath: ./frontend/Dockerfile
+    dockerfilePath: Dockerfile
     dockerContext: ./frontend
     envVars:
       - key: VITE_API_URL

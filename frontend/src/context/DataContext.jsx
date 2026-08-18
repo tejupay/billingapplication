@@ -1,4 +1,5 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import { API_BASE_URL } from '../config';
 
 const DataContext = createContext();
 
@@ -131,17 +132,9 @@ const INITIAL_CUSTOMERS = [
   }
 ];
 
-const INITIAL_INVOICES = [];
-
-const INITIAL_AUDIT_LOGS = [];
-
-const INITIAL_EXPENSES = [];
-
-// Bump this version whenever you want to force-clear stale data on users' browsers
-const DATA_VERSION = 'v2';
+const DATA_VERSION = 'v3';
 
 export const DataProvider = ({ children }) => {
-  // Force-clear old data if version is stale
   if (localStorage.getItem('erp_data_version') !== DATA_VERSION) {
     ['erp_invoices', 'erp_expenses', 'erp_audit_logs'].forEach(k => localStorage.removeItem(k));
     localStorage.setItem('erp_data_version', DATA_VERSION);
@@ -177,12 +170,73 @@ export const DataProvider = ({ children }) => {
     return saved ? JSON.parse(saved) : [];
   });
 
+  // Sync to local storage as offline backup
   useEffect(() => { localStorage.setItem('erp_shop_details', JSON.stringify(shopDetails)); }, [shopDetails]);
   useEffect(() => { localStorage.setItem('erp_products', JSON.stringify(products)); }, [products]);
   useEffect(() => { localStorage.setItem('erp_customers', JSON.stringify(customers)); }, [customers]);
   useEffect(() => { localStorage.setItem('erp_invoices', JSON.stringify(invoices)); }, [invoices]);
   useEffect(() => { localStorage.setItem('erp_audit_logs', JSON.stringify(auditLogs)); }, [auditLogs]);
   useEffect(() => { localStorage.setItem('erp_expenses', JSON.stringify(expenses)); }, [expenses]);
+
+  // Sync across all phones/devices by fetching backend state
+  const fetchFromBackend = useCallback(async () => {
+    try {
+      const [prodRes, invRes, custRes] = await Promise.allSettled([
+        fetch(`${API_BASE_URL}/api/products?tenantId=1`),
+        fetch(`${API_BASE_URL}/api/invoices?tenantId=1`),
+        fetch(`${API_BASE_URL}/api/customers?tenantId=1`)
+      ]);
+
+      if (prodRes.status === 'fulfilled' && prodRes.value.ok) {
+        const prodData = await prodRes.value.json();
+        if (Array.isArray(prodData) && prodData.length > 0) {
+          const mapped = prodData.map(p => ({
+            id: p.id,
+            name: p.name,
+            barcode: p.barcode || '',
+            hsnCode: p.hsnCode || '',
+            category: typeof p.category === 'object' ? p.category?.name : (p.category || 'General'),
+            brand: typeof p.brand === 'object' ? p.brand?.name : (p.brand || ''),
+            purchasePrice: p.purchasePrice || 0,
+            sellingPrice: p.sellingPrice || 0,
+            taxRate: p.taxRate || 18,
+            stockQuantity: p.stockQuantity ?? 0,
+            minStockThreshold: p.minStockThreshold ?? 5,
+            unit: p.unit || 'Pcs'
+          }));
+          setProducts(mapped);
+        }
+      }
+
+      if (invRes.status === 'fulfilled' && invRes.value.ok) {
+        const invData = await invRes.value.json();
+        if (Array.isArray(invData) && invData.length > 0) {
+          setInvoices(invData);
+        }
+      }
+
+      if (custRes.status === 'fulfilled' && custRes.value.ok) {
+        const custData = await custRes.value.json();
+        if (Array.isArray(custData) && custData.length > 0) {
+          setCustomers(custData);
+        }
+      }
+    } catch (e) {
+      console.log('Skipping backend sync, using local state:', e.message);
+    }
+  }, []);
+
+  // Poll backend every 3 seconds so edits from any phone sync instantly to all other phones
+  useEffect(() => {
+    fetchFromBackend();
+    const interval = setInterval(fetchFromBackend, 3000);
+    const handleFocus = () => fetchFromBackend();
+    window.addEventListener('focus', handleFocus);
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('focus', handleFocus);
+    };
+  }, [fetchFromBackend]);
 
   const updateShopDetails = (newDetails) => {
     setShopDetails(prev => ({ ...prev, ...newDetails }));
@@ -209,20 +263,39 @@ export const DataProvider = ({ children }) => {
     setAuditLogs(prev => [newLog, ...prev]);
   };
 
-  const addProduct = (product, user = {}) => {
+  const addProduct = async (product, user = {}) => {
     const newProd = { id: Date.now(), ...product };
     setProducts(prev => [...prev, newProd]);
     addAuditLog('PRODUCT_CREATED', user?.username, user?.role, `Added EV part ${newProd.name}`);
+
+    try {
+      await fetch(`${API_BASE_URL}/api/products?tenantId=1`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(product)
+      });
+      fetchFromBackend();
+    } catch (e) {
+      console.log('Saved product locally');
+    }
+
     return newProd;
   };
 
-  const deleteProduct = (productId, user = {}) => {
+  const deleteProduct = async (productId, user = {}) => {
     const target = products.find(p => p.id === productId);
     setProducts(prev => prev.filter(p => p.id !== productId));
     addAuditLog('PRODUCT_DELETED', user?.username || 'owner', user?.role || 'OWNER', `Deleted inventory item ${target?.name || productId}`);
+
+    try {
+      await fetch(`${API_BASE_URL}/api/products/${productId}`, { method: 'DELETE' });
+      fetchFromBackend();
+    } catch (e) {
+      console.log('Deleted product locally');
+    }
   };
 
-  const adjustStock = (productId, delta, mode, user = {}) => {
+  const adjustStock = async (productId, delta, mode, user = {}) => {
     setProducts(prev => prev.map(p => {
       if (p.id === productId) {
         const newQty = mode === 'IN' ? p.stockQuantity + delta : Math.max(0, p.stockQuantity - delta);
@@ -231,9 +304,16 @@ export const DataProvider = ({ children }) => {
       return p;
     }));
     addAuditLog('STOCK_ADJUSTED', user?.username, user?.role, `Stock ${mode} by ${delta} for part #${productId}`);
+
+    try {
+      await fetch(`${API_BASE_URL}/api/products/${productId}/stock?quantity=${delta}&mode=${mode}`, { method: 'PUT' });
+      fetchFromBackend();
+    } catch (e) {
+      console.log('Adjusted stock locally');
+    }
   };
 
-  const addInvoice = (invoice, user = {}) => {
+  const addInvoice = async (invoice, user = {}) => {
     const invNumStr = invoice.invoiceNumber || `EV-${Date.now().toString().slice(-6)}`;
     const newInv = {
       id: Date.now(),
@@ -246,7 +326,6 @@ export const DataProvider = ({ children }) => {
 
     setInvoices(prev => [newInv, ...prev]);
 
-    // Automatically update customer list if it's a new customer
     if (invoice.customerName && !customers.some(c => c.name.toLowerCase() === invoice.customerName.toLowerCase())) {
       addCustomer({
         name: invoice.customerName,
@@ -256,7 +335,6 @@ export const DataProvider = ({ children }) => {
       });
     }
 
-    // Decrement stock
     if (invoice.items && Array.isArray(invoice.items)) {
       setProducts(prev => prev.map(p => {
         const lineItem = invoice.items.find(item => item.id === p.id || item.productName === p.name);
@@ -268,6 +346,18 @@ export const DataProvider = ({ children }) => {
     }
 
     addAuditLog('INVOICE_CREATED', user?.username || 'owner', user?.role || 'OWNER', `Created EV Invoice #${newInv.invoiceNumber} for ₹${newInv.grandTotal.toLocaleString()}`);
+
+    try {
+      await fetch(`${API_BASE_URL}/api/invoices?tenantId=1&userId=1`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newInv)
+      });
+      fetchFromBackend();
+    } catch (e) {
+      console.log('Saved invoice locally');
+    }
+
     return newInv;
   };
 
@@ -281,15 +371,26 @@ export const DataProvider = ({ children }) => {
     setInvoices(prev => prev.filter(inv => inv.id !== invoiceId));
     addAuditLog('INVOICE_DELETED', user?.username || 'owner', user?.role || 'OWNER', `Deleted Invoice #${invoiceId}`);
     try {
-      await fetch(`http://localhost:8080/api/invoices/${invoiceId}`, { method: 'DELETE' });
+      await fetch(`${API_BASE_URL}/api/invoices/${invoiceId}`, { method: 'DELETE' });
+      fetchFromBackend();
     } catch (e) {
-      console.log('Local offline invoice deletion sync');
+      console.log('Deleted invoice locally');
     }
   };
 
-  const addCustomer = (customer) => {
+  const addCustomer = async (customer) => {
     const newCust = { id: Date.now(), pendingBalance: 0, ...customer };
     setCustomers(prev => [...prev, newCust]);
+    try {
+      await fetch(`${API_BASE_URL}/api/customers?tenantId=1`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newCust)
+      });
+      fetchFromBackend();
+    } catch (e) {
+      console.log('Saved customer locally');
+    }
   };
 
   const deleteCustomer = async (customerId, user = {}) => {
@@ -297,9 +398,10 @@ export const DataProvider = ({ children }) => {
     setCustomers(prev => prev.filter(c => c.id !== customerId));
     addAuditLog('CUSTOMER_DELETED', user?.username || 'owner', user?.role || 'OWNER', `Deleted customer profile ${target?.name || customerId}`);
     try {
-      await fetch(`http://localhost:8080/api/customers/${customerId}`, { method: 'DELETE' });
+      await fetch(`${API_BASE_URL}/api/customers/${customerId}`, { method: 'DELETE' });
+      fetchFromBackend();
     } catch (e) {
-      console.log('Local offline customer deletion sync');
+      console.log('Deleted customer locally');
     }
   };
 
@@ -338,7 +440,8 @@ export const DataProvider = ({ children }) => {
       deleteCustomer,
       recordCustomerPayment,
       addExpense,
-      addAuditLog
+      addAuditLog,
+      refreshData: fetchFromBackend
     }}>
       {children}
     </DataContext.Provider>

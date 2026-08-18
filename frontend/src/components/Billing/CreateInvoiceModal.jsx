@@ -234,7 +234,7 @@ export const CreateInvoiceModal = ({ isOpen, onClose, onPrintInvoice, editingInv
   const balanceDue = Math.max(0, grandTotal - finalReceived);
 
   // Save Invoice Handler
-  const handleSaveInvoice = () => {
+  const handleSaveInvoice = async () => {
     setErrMessage('');
     if (!customerName || !customerName.trim()) {
       setErrMessage('Please enter Customer Name.');
@@ -285,21 +285,29 @@ export const CreateInvoiceModal = ({ isOpen, onClose, onPrintInvoice, editingInv
     try {
       let saved;
       if (editingInvoice && editingInvoice.id) {
-        saved = updateInvoice({ ...editingInvoice, ...payload }, currentUser);
+        saved = await updateInvoice({ ...editingInvoice, ...payload }, currentUser);
       } else {
-        saved = addInvoice(payload, currentUser);
+        saved = await addInvoice(payload, currentUser);
       }
-      setCompletedInvoice(saved);
+
+      if (saved && typeof saved.then === 'function') {
+        saved = await saved;
+      }
+
+      const invoiceObj = (saved && saved.items) ? saved : { ...payload, id: Date.now() };
+
+      setCompletedInvoice(invoiceObj);
 
       if (paymentType === 'ONLINE' || paymentType === 'UPI' || paymentType === 'ACCOUNT_TRANSFER') {
         setShowUpiQrModal(true);
       } else {
         if (onPrintInvoice) {
-          onPrintInvoice(saved);
+          onPrintInvoice(invoiceObj);
         }
         onClose();
       }
     } catch (e) {
+      console.error('Error saving invoice:', e);
       setErrMessage('Error saving invoice.');
     }
   };

@@ -24,7 +24,9 @@ export const InvoicePrintTemplate = ({ invoice, onClose }) => {
     }
   }, [invoice]);
 
-  if (!invoice) return null;
+  if (!invoice || typeof invoice.then === 'function') return null;
+  const itemsList = Array.isArray(invoice.items) ? invoice.items : [];
+  const totalVal = invoice.grandTotal ?? 0;
 
   const handlePrint = () => {
     window.print();

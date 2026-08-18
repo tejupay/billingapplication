@@ -273,6 +273,10 @@ export const CreateInvoiceModal = ({ isOpen, onClose, onPrintInvoice, editingInv
         totalPrice: Number(i.amount)
       })),
       subtotal: grandTotal,
+      cgstAmount: 0,
+      sgstAmount: 0,
+      igstAmount: 0,
+      discountAmount: 0,
       grandTotal,
       paidAmount: finalReceived,
       balanceAmount: balanceDue,

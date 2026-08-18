@@ -81,5 +81,15 @@ public class Invoice {
     @PrePersist
     protected void onCreate() {
         createdAt = LocalDateTime.now();
+        if (type == null) type = InvoiceType.TAX_INVOICE;
+        if (subtotal == null) subtotal = grandTotal != null ? grandTotal : BigDecimal.ZERO;
+        if (cgstAmount == null) cgstAmount = BigDecimal.ZERO;
+        if (sgstAmount == null) sgstAmount = BigDecimal.ZERO;
+        if (igstAmount == null) igstAmount = BigDecimal.ZERO;
+        if (discountAmount == null) discountAmount = BigDecimal.ZERO;
+        if (grandTotal == null) grandTotal = BigDecimal.ZERO;
+        if (paidAmount == null) paidAmount = BigDecimal.ZERO;
+        if (balanceAmount == null) balanceAmount = BigDecimal.ZERO;
+        if (paymentStatus == null) paymentStatus = PaymentStatus.PAID;
     }
 }

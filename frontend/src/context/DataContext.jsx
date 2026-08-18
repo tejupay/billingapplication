@@ -321,6 +321,11 @@ export const DataProvider = ({ children }) => {
       date: invoice.date || new Date().toISOString().split('T')[0],
       createdBy: user?.username || 'owner',
       createdByName: user?.fullName || 'EV Service Admin',
+      subtotal: invoice.subtotal || invoice.grandTotal || 0,
+      cgstAmount: invoice.cgstAmount || 0,
+      sgstAmount: invoice.sgstAmount || 0,
+      igstAmount: invoice.igstAmount || 0,
+      discountAmount: invoice.discountAmount || 0,
       ...invoice
     };
 
@@ -348,12 +353,17 @@ export const DataProvider = ({ children }) => {
     addAuditLog('INVOICE_CREATED', user?.username || 'owner', user?.role || 'OWNER', `Created EV Invoice #${newInv.invoiceNumber} for ₹${newInv.grandTotal.toLocaleString()}`);
 
     try {
-      await fetch(`${API_BASE_URL}/api/invoices?tenantId=1&userId=1`, {
+      const uId = user?.id || 1;
+      const res = await fetch(`${API_BASE_URL}/api/invoices?tenantId=1&userId=${uId}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(newInv)
       });
-      fetchFromBackend();
+      if (res.ok) {
+        const savedFromBackend = await res.json();
+        fetchFromBackend();
+        return savedFromBackend;
+      }
     } catch (e) {
       console.log('Saved invoice locally');
     }

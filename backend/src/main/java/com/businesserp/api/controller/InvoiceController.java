@@ -36,15 +36,25 @@ public class InvoiceController {
     }
 
     @PostMapping
-    public ResponseEntity<Invoice> createInvoice(@RequestBody Invoice invoice, @RequestParam Long tenantId, @RequestParam Long userId) {
-        Tenant tenant = tenantRepo.findById(tenantId)
-                .orElseThrow(() -> new RuntimeException("Tenant not found"));
-        User user = userRepo.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+    public ResponseEntity<Invoice> createInvoice(
+            @RequestBody Invoice invoice,
+            @RequestParam(required = false) Long tenantId,
+            @RequestParam(required = false) Long userId
+    ) {
+        Long tId = tenantId != null ? tenantId : 1L;
+        Long uId = userId != null ? userId : 1L;
+
+        Tenant tenant = tenantRepo.findById(tId)
+                .orElseGet(() -> tenantRepo.findAll().stream().findFirst().orElseThrow(() -> new RuntimeException("Tenant not found")));
+        User user = userRepo.findById(uId)
+                .orElseGet(() -> userRepo.findAll().stream().findFirst().orElseThrow(() -> new RuntimeException("User not found")));
 
         invoice.setTenant(tenant);
         invoice.setCreatedBy(user);
 
+        if (invoice.getType() == null) {
+            invoice.setType(InvoiceType.TAX_INVOICE);
+        }
         if (invoice.getInvoiceNumber() == null || invoice.getInvoiceNumber().isEmpty()) {
             invoice.setInvoiceNumber("INV-" + System.currentTimeMillis() / 1000 + "-" + UUID.randomUUID().toString().substring(0, 4).toUpperCase());
         }

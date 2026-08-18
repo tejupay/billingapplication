@@ -22,10 +22,10 @@ export const EmployeeManager = () => {
   const [msg, setMsg] = useState('');
   const [err, setErr] = useState('');
 
-  const handleCreateStaff = (e) => {
+  const handleCreateStaff = async (e) => {
     e.preventDefault();
     setMsg(''); setErr('');
-    const res = createStaffAccount({
+    const res = await createStaffAccount({
       username: newUsername,
       email: newEmail,
       password: newPassword,

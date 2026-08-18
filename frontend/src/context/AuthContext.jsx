@@ -1,10 +1,9 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { API_BASE_URL } from '../config';
 
 const AuthContext = createContext();
 
-// Version key — bump this whenever you change INITIAL_ACCOUNTS to force-clear stale cache
-const ACCOUNTS_VERSION = 'v4';
+const ACCOUNTS_VERSION = 'v5';
 
 export const INITIAL_ACCOUNTS = [
   {
@@ -29,11 +28,9 @@ export const INITIAL_ACCOUNTS = [
   }
 ];
 
-// Always seed fresh accounts on version mismatch, preventing stale cache issues
 const loadAccounts = () => {
   const storedVersion = localStorage.getItem('erp_accounts_version');
   if (storedVersion !== ACCOUNTS_VERSION) {
-    // Clear old data and reseed
     localStorage.removeItem('erp_accounts');
     localStorage.removeItem('erp_user');
     localStorage.setItem('erp_accounts_version', ACCOUNTS_VERSION);
@@ -43,7 +40,6 @@ const loadAccounts = () => {
     const saved = localStorage.getItem('erp_accounts');
     if (!saved) return INITIAL_ACCOUNTS;
     const parsed = JSON.parse(saved);
-    // Ensure every INITIAL_ACCOUNT is present with up-to-date password
     const merged = [...parsed];
     INITIAL_ACCOUNTS.forEach(initAcc => {
       const idx = merged.findIndex(
@@ -53,7 +49,6 @@ const loadAccounts = () => {
       if (idx === -1) {
         merged.push(initAcc);
       } else {
-        // Update password and role to match latest INITIAL_ACCOUNTS
         merged[idx] = { ...merged[idx], password: initAcc.password, role: initAcc.role, active: true };
       }
     });
@@ -88,6 +83,59 @@ export const AuthProvider = ({ children }) => {
     localStorage.setItem('erp_accounts', JSON.stringify(accounts));
   }, [accounts]);
 
+  // Fetch & sync user accounts from backend database so all devices have identical accounts
+  const fetchBackendUsers = useCallback(async () => {
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/owner/users?tenantId=1`);
+      if (res.ok) {
+        const users = await res.json();
+        if (Array.isArray(users) && users.length > 0) {
+          setAccounts(prev => {
+            const updated = [...prev];
+            users.forEach(u => {
+              const idx = updated.findIndex(
+                a => a.id === u.id ||
+                  a.username.toLowerCase() === (u.username || '').toLowerCase() ||
+                  a.email.toLowerCase() === (u.email || '').toLowerCase()
+              );
+              const formattedUser = {
+                id: u.id,
+                username: u.username,
+                email: u.email || u.username,
+                fullName: u.fullName || u.username,
+                password: u.plainPassword || u.password || '123456789',
+                role: u.role || 'EMPLOYEE',
+                tenantName: u.tenant?.name || 'GreenDrive EV Motors',
+                active: u.active ?? true
+              };
+
+              if (idx === -1) {
+                updated.push(formattedUser);
+              } else {
+                updated[idx] = { ...updated[idx], ...formattedUser };
+              }
+            });
+            return updated;
+          });
+        }
+      }
+    } catch (e) {
+      console.log('Backend user sync skipped');
+    }
+  }, []);
+
+  // Sync users every 3 seconds across devices & on window focus
+  useEffect(() => {
+    fetchBackendUsers();
+    const interval = setInterval(fetchBackendUsers, 3000);
+    const handleFocus = () => fetchBackendUsers();
+    window.addEventListener('focus', handleFocus);
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('focus', handleFocus);
+    };
+  }, [fetchBackendUsers]);
+
   const login = async (usernameInput, passwordInput) => {
     const cleanUser = (usernameInput || '').trim().toLowerCase();
     const cleanPass = (passwordInput || '').trim();
@@ -120,10 +168,13 @@ export const AuthProvider = ({ children }) => {
         return { success: true, user: userObj };
       }
     } catch (err) {
-      // Backend offline — fallback to local accounts below
+      // Offline fallback below
     }
 
-    // Local account fallback — checks current in-memory accounts
+    // Refresh backend users before checking local accounts
+    await fetchBackendUsers();
+
+    // Local account fallback (uses synced accounts array)
     const account = accounts.find(a =>
       a.username.toLowerCase() === cleanUser ||
       a.email.toLowerCase() === cleanUser
@@ -147,38 +198,83 @@ export const AuthProvider = ({ children }) => {
     setCurrentUser(null);
   };
 
-  const changePassword = (userId, newPassword) => {
+  const changePassword = async (userId, newPassword) => {
     const updated = accounts.map(a => a.id === userId ? { ...a, password: newPassword } : a);
     setAccounts(updated);
     if (currentUser?.id === userId) {
       setCurrentUser(prev => ({ ...prev, password: newPassword }));
     }
+
+    try {
+      await fetch(`${API_BASE_URL}/api/owner/users/${userId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password: newPassword })
+      });
+      fetchBackendUsers();
+    } catch (e) {}
+
     return { success: true, message: 'Password updated successfully!' };
   };
 
-  const createStaffAccount = (newUser) => {
+  const createStaffAccount = async (newUser) => {
     if (accounts.some(a => a.username.toLowerCase() === newUser.username.toLowerCase())) {
       return { success: false, message: 'Username already taken' };
     }
+
     const created = {
       id: Date.now(),
       ...newUser,
       tenantName: currentUser?.tenantName || 'GreenDrive EV Motors',
       active: true
     };
+
     setAccounts(prev => [...prev, created]);
+
+    // Save account to cloud backend database so ALL phones/laptops can log in instantly
+    try {
+      await fetch(`${API_BASE_URL}/api/owner/users?tenantId=1`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          username: newUser.username,
+          email: newUser.email || newUser.username,
+          password: newUser.password,
+          fullName: newUser.fullName,
+          role: newUser.role || 'EMPLOYEE'
+        })
+      });
+      fetchBackendUsers();
+    } catch (e) {
+      console.log('Account saved locally');
+    }
+
     return { success: true, user: created };
   };
 
-  const toggleAccountStatus = (id) => {
+  const toggleAccountStatus = async (id) => {
     setAccounts(prev => prev.map(a => a.id === id && a.role !== 'OWNER' ? { ...a, active: !a.active } : a));
+    try {
+      await fetch(`${API_BASE_URL}/api/owner/users/${id}/toggle-status`, { method: 'PATCH' });
+      fetchBackendUsers();
+    } catch (e) {}
   };
 
-  const updateAccount = (id, updatedData) => {
+  const updateAccount = async (id, updatedData) => {
     setAccounts(prev => prev.map(a => a.id === id ? { ...a, ...updatedData } : a));
     if (currentUser?.id === id) {
       setCurrentUser(prev => ({ ...prev, ...updatedData }));
     }
+
+    try {
+      await fetch(`${API_BASE_URL}/api/owner/users/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updatedData)
+      });
+      fetchBackendUsers();
+    } catch (e) {}
+
     return { success: true };
   };
 
@@ -193,7 +289,8 @@ export const AuthProvider = ({ children }) => {
       createStaffAccount,
       toggleAccountStatus,
       updateAccount,
-      INITIAL_ACCOUNTS
+      INITIAL_ACCOUNTS,
+      refreshUsers: fetchBackendUsers
     }}>
       {children}
     </AuthContext.Provider>

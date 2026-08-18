@@ -1,0 +1,84 @@
+#!/bin/sh
+# ----------------------------------------------------------------------------
+# Maven Start Up Batch script for Unix/Linux
+# ----------------------------------------------------------------------------
+
+cygwin=false
+darwin=false
+os400=false
+hpux=false
+case "`uname`" in
+CYGWIN*) cygwin=true;;
+Darwin*) darwin=true;;
+OS400*) os400=true;;
+HP-UX*) hpux=true;;
+esac
+
+failure() {
+  echo "Error: $1" >&2
+  exit 1
+}
+
+PRG="$0"
+
+while [ -h "$PRG" ]; do
+  ls=`ls -ld "$PRG"`
+  link=`ls -ld "$PRG" | sed 's/.*-> //'`
+  if expr "$link" : '/.*' > /dev/null; then
+    PRG="$link"
+  else
+    PRG=`dirname "$PRG"`/"$link"
+  fi
+done
+
+PRGDIR=`dirname "$PRG"`
+BASE_DIR=`cd "$PRGDIR" && pwd`
+
+case "`uname`" in
+  MINGW*|MSYS*|CYGWIN*)
+    [ -n "$JAVA_HOME" ] && JAVA_HOME=`cygpath --unix "$JAVA_HOME"`
+    ;;
+esac
+
+if [ -z "$MAVEN_SKIP_RC" ]; then
+  if [ -f /etc/mavenrc ]; then
+    . /etc/mavenrc
+  fi
+  if [ -f "$HOME/.mavenrc" ]; then
+    . "$HOME/.mavenrc"
+  fi
+fi
+
+if $cygwin; then
+  [ -n "$JAVA_HOME" ] && JAVA_HOME=`cygpath --unix "$JAVA_HOME"`
+fi
+
+if [ -z "$JAVA_HOME" ]; then
+  if $darwin; then
+    [ -z "$JAVA_HOME" -a -f "/usr/libexec/java_home" ] && JAVA_HOME=`/usr/libexec/java_home`
+    [ -z "$JAVA_HOME" -a -d "/Library/Java/Home" ] && JAVA_HOME="/Library/Java/Home"
+    [ -z "$JAVA_HOME" -a -d "/System/Library/Frameworks/JavaVM.framework/Home" ] && JAVA_HOME="/System/Library/Frameworks/JavaVM.framework/Home"
+  fi
+fi
+
+if [ -z "$JAVA_HOME" ]; then
+  javaExecutable="`which java 2>/dev/null`"
+  if [ -z "$javaExecutable" ]; then
+    failure "JAVA_HOME not set and no 'java' command could be found in your PATH."
+  fi
+  java="${javaExecutable}"
+else
+  java="${JAVA_HOME}/bin/java"
+fi
+
+if [ ! -x "$java" ]; then
+  failure "JAVA_HOME is set to an invalid directory: $JAVA_HOME. Please set the JAVA_HOME variable in your environment to match the location of your Java installation."
+fi
+
+WRAPPER_JAR="$BASE_DIR/.mvn/wrapper/maven-wrapper.jar"
+if [ ! -f "$WRAPPER_JAR" ]; then
+  failure "Could not find $WRAPPER_JAR"
+fi
+
+MAVEN_PROJECTBASEDIR="${MAVEN_BASEDIR:-$BASE_DIR}"
+exec "$java" $MAVEN_OPTS -classpath "$WRAPPER_JAR" "-Dmaven.home=$MAVEN_HOME" "-Dmaven.multiModuleProjectDirectory=$MAVEN_PROJECTBASEDIR" org.apache.maven.wrapper.MavenWrapperMain "$@"

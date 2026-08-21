@@ -20,13 +20,15 @@ public class ProductController {
     private final ProductRepository productRepo;
     private final TenantRepository tenantRepo;
     private final AuditLogRepository auditLogRepo;
+    private final com.businesserp.api.service.RealtimeBroadcastService broadcastService;
 
     @GetMapping
-    public ResponseEntity<List<Product>> getProducts(@RequestParam Long tenantId, @RequestParam(required = false) String search) {
+    public ResponseEntity<List<Product>> getProducts(@RequestParam(required = false) Long tenantId, @RequestParam(required = false) String search) {
+        Long tId = tenantId != null ? tenantId : 1L;
         if (search != null && !search.trim().isEmpty()) {
-            return ResponseEntity.ok(productRepo.searchProducts(tenantId, search.trim()));
+            return ResponseEntity.ok(productRepo.searchProducts(tId, search.trim()));
         }
-        return ResponseEntity.ok(productRepo.findByTenantId(tenantId));
+        return ResponseEntity.ok(productRepo.findByTenantId(tId));
     }
 
     @GetMapping("/low-stock")
@@ -59,6 +61,7 @@ public class ProductController {
                 .tenant(tenant)
                 .build());
 
+        broadcastService.broadcast("PRODUCT_MUTATED", saved);
         return ResponseEntity.ok(saved);
     }
 
@@ -74,6 +77,8 @@ public class ProductController {
                 .details("Deleted inventory product: " + product.getName())
                 .tenant(product.getTenant())
                 .build());
+
+        broadcastService.broadcast("PRODUCT_MUTATED", id);
 
         return ResponseEntity.ok(java.util.Map.of("message", "Product deleted successfully"));
     }
@@ -96,6 +101,8 @@ public class ProductController {
                 .details("Stock " + mode + " by " + quantity + " for " + saved.getName() + ". New stock: " + saved.getStockQuantity())
                 .tenant(saved.getTenant())
                 .build());
+
+        broadcastService.broadcast("PRODUCT_MUTATED", saved);
 
         return ResponseEntity.ok(saved);
     }

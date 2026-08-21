@@ -18,21 +18,26 @@ public class CustomerController {
 
     private final CustomerRepository customerRepo;
     private final TenantRepository tenantRepo;
+    private final com.businesserp.api.service.RealtimeBroadcastService broadcastService;
 
     @GetMapping
-    public ResponseEntity<List<Customer>> getCustomers(@RequestParam Long tenantId, @RequestParam(required = false) String search) {
+    public ResponseEntity<List<Customer>> getCustomers(@RequestParam(required = false) Long tenantId, @RequestParam(required = false) String search) {
+        Long tId = tenantId != null ? tenantId : 1L;
         if (search != null && !search.trim().isEmpty()) {
-            return ResponseEntity.ok(customerRepo.findByNameContainingIgnoreCaseAndTenantId(search.trim(), tenantId));
+            return ResponseEntity.ok(customerRepo.findByNameContainingIgnoreCaseAndTenantId(search.trim(), tId));
         }
-        return ResponseEntity.ok(customerRepo.findByTenantId(tenantId));
+        return ResponseEntity.ok(customerRepo.findByTenantId(tId));
     }
 
     @PostMapping
-    public ResponseEntity<Customer> createCustomer(@RequestBody Customer customer, @RequestParam Long tenantId) {
-        Tenant tenant = tenantRepo.findById(tenantId)
-                .orElseThrow(() -> new RuntimeException("Tenant not found"));
+    public ResponseEntity<Customer> createCustomer(@RequestBody Customer customer, @RequestParam(required = false) Long tenantId) {
+        Long tId = tenantId != null ? tenantId : 1L;
+        Tenant tenant = tenantRepo.findById(tId)
+                .orElseGet(() -> tenantRepo.findAll().stream().findFirst().orElseThrow(() -> new RuntimeException("Tenant not found")));
         customer.setTenant(tenant);
-        return ResponseEntity.ok(customerRepo.save(customer));
+        Customer saved = customerRepo.save(customer);
+        broadcastService.broadcast("CUSTOMER_MUTATED", saved);
+        return ResponseEntity.ok(saved);
     }
 
     @PostMapping("/{id}/payment")
@@ -42,8 +47,9 @@ public class CustomerController {
 
         BigDecimal current = customer.getPendingBalance() != null ? customer.getPendingBalance() : BigDecimal.ZERO;
         customer.setPendingBalance(current.subtract(paymentAmount).max(BigDecimal.ZERO));
-
-        return ResponseEntity.ok(customerRepo.save(customer));
+        Customer saved = customerRepo.save(customer);
+        broadcastService.broadcast("CUSTOMER_MUTATED", saved);
+        return ResponseEntity.ok(saved);
     }
 
     @DeleteMapping("/{id}")

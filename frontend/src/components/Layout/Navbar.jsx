@@ -5,7 +5,7 @@ import { Shield, LogOut, PlusCircle, Building2, KeyRound } from 'lucide-react';
 
 export const Navbar = ({ onOpenBilling, onOpenAudit, onOpenCompanyModal, onChangePassword }) => {
   const { currentUser, logout } = useAuth();
-  const { shopDetails } = useData();
+  const { shopDetails, isOnline, wsConnected } = useData();
 
   const getRoleBadgeColor = (role) => {
     switch (role) {
@@ -18,7 +18,7 @@ export const Navbar = ({ onOpenBilling, onOpenAudit, onOpenCompanyModal, onChang
 
   return (
     <header className="bg-slate-900 border-b border-slate-800 h-16 px-6 flex items-center justify-between sticky top-0 z-30 shadow-md">
-      {/* TejuPay Brand Logo + Name */}
+      {/* TejuPay Brand Logo + Name + Live Sync Badge */}
       <div className="flex items-center gap-3">
         <img
           src="/tejupay-logo.svg"
@@ -28,9 +28,15 @@ export const Navbar = ({ onOpenBilling, onOpenAudit, onOpenCompanyModal, onChang
         <div>
           <h1 className="text-base font-bold text-white tracking-tight flex items-center gap-2">
             <span>Teju<span className="text-blue-400">Pay</span></span>
-            <span className="text-[10px] font-mono px-2 py-0.5 bg-blue-500/10 text-blue-400 border border-blue-500/20 rounded-full">
-              GST Billing ERP
-            </span>
+            {isOnline ? (
+              <span className="text-[10px] font-mono px-2 py-0.5 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded-full flex items-center gap-1">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span> Live Sync
+              </span>
+            ) : (
+              <span className="text-[10px] font-mono px-2 py-0.5 bg-amber-500/10 text-amber-400 border border-amber-500/20 rounded-full flex items-center gap-1">
+                ⚡ Offline (Local Backup)
+              </span>
+            )}
           </h1>
           <p className="text-xs text-slate-400 font-sans">{shopDetails?.name || 'Smart Business & Billing Platform'}</p>
         </div>

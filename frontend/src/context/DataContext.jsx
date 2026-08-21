@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import { API_BASE_URL } from '../config';
+import { API_BASE_URL, WS_BASE_URL } from '../config';
 
 const DataContext = createContext();
 
@@ -277,6 +277,74 @@ export const DataProvider = ({ children }) => {
     }
   }, []);
 
+  const [isOnline, setIsOnline] = useState(() => typeof navigator !== 'undefined' ? navigator.onLine : true);
+  const [wsConnected, setWsConnected] = useState(false);
+
+  // Monitor network online / offline status
+  useEffect(() => {
+    const handleOnline = () => {
+      setIsOnline(true);
+      fetchFromBackend();
+    };
+    const handleOffline = () => {
+      setIsOnline(false);
+    };
+
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, [fetchFromBackend]);
+
+  // Connect WebSocket for instant real-time synchronization
+  useEffect(() => {
+    let ws = null;
+    let reconnectTimer = null;
+
+    const connectWs = () => {
+      try {
+        const wsUrl = `${WS_BASE_URL}/ws-billing-native`;
+        ws = new WebSocket(wsUrl);
+
+        ws.onopen = () => {
+          setWsConnected(true);
+        };
+
+        ws.onmessage = (event) => {
+          try {
+            const data = JSON.parse(event.data);
+            if (data) {
+              fetchFromBackend();
+            }
+          } catch (e) {
+            fetchFromBackend();
+          }
+        };
+
+        ws.onerror = () => {
+          setWsConnected(false);
+        };
+
+        ws.onclose = () => {
+          setWsConnected(false);
+          reconnectTimer = setTimeout(connectWs, 5000);
+        };
+      } catch (e) {
+        setWsConnected(false);
+      }
+    };
+
+    connectWs();
+
+    return () => {
+      if (ws) ws.close();
+      if (reconnectTimer) clearTimeout(reconnectTimer);
+    };
+  }, [fetchFromBackend]);
+
   // Poll backend every 3 seconds so edits from any phone sync instantly to all other phones
   useEffect(() => {
     fetchFromBackend();
@@ -502,6 +570,8 @@ export const DataProvider = ({ children }) => {
       recordCustomerPayment,
       addExpense,
       addAuditLog,
+      isOnline,
+      wsConnected,
       refreshData: fetchFromBackend
     }}>
       {children}

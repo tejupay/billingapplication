@@ -22,14 +22,17 @@ public class UserController {
     private final TenantRepository tenantRepo;
     private final AuditLogRepository auditLogRepo;
     private final BCryptPasswordEncoder passwordEncoder;
+    private final com.businesserp.api.service.RealtimeBroadcastService broadcastService;
 
     @GetMapping
-    public ResponseEntity<List<User>> getTenantUsers(@RequestParam Long tenantId) {
-        return ResponseEntity.ok(userRepo.findByTenantId(tenantId));
+    public ResponseEntity<List<User>> getTenantUsers(@RequestParam(required = false) Long tenantId) {
+        Long tId = tenantId != null ? tenantId : 1L;
+        return ResponseEntity.ok(userRepo.findByTenantId(tId));
     }
 
     @PostMapping
-    public ResponseEntity<?> createUser(@Valid @RequestBody CreateUserRequest request, @RequestParam Long tenantId) {
+    public ResponseEntity<?> createUser(@Valid @RequestBody CreateUserRequest request, @RequestParam(required = false) Long tenantId) {
+        Long tId = tenantId != null ? tenantId : 1L;
         if (userRepo.existsByUsername(request.getUsername())) {
             return ResponseEntity.badRequest().body(Map.of("message", "Username already exists"));
         }
@@ -64,6 +67,8 @@ public class UserController {
                 .tenant(tenant)
                 .build());
 
+        broadcastService.broadcast("USER_MUTATED", savedUser);
+
         return ResponseEntity.ok(savedUser);
     }
 
@@ -77,7 +82,9 @@ public class UserController {
         }
 
         user.setActive(!user.isActive());
-        userRepo.save(user);
+        User updated = userRepo.save(user);
+
+        broadcastService.broadcast("USER_MUTATED", updated);
 
         return ResponseEntity.ok(Map.of(
                 "message", "User status updated successfully",
@@ -118,6 +125,8 @@ public class UserController {
                 .details("Updated account details for user ID: " + userId + " (" + updatedUser.getUsername() + ")")
                 .tenant(user.getTenant())
                 .build());
+
+        broadcastService.broadcast("USER_MUTATED", updatedUser);
 
         return ResponseEntity.ok(updatedUser);
     }

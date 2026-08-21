@@ -22,6 +22,7 @@ public class InvoiceController {
     private final UserRepository userRepo;
     private final TenantRepository tenantRepo;
     private final AuditLogRepository auditLogRepo;
+    private final com.businesserp.api.service.RealtimeBroadcastService broadcastService;
 
     @GetMapping
     public ResponseEntity<List<Invoice>> getInvoices(
@@ -104,6 +105,8 @@ public class InvoiceController {
                 .tenant(tenant)
                 .build());
 
+        broadcastService.broadcast("INVOICE_MUTATED", saved);
+
         return ResponseEntity.ok(saved);
     }
 
@@ -154,6 +157,7 @@ public class InvoiceController {
                 .build());
 
         invoiceRepo.delete(invoice);
+        broadcastService.broadcast("INVOICE_MUTATED", invoice.getId());
 
         return ResponseEntity.ok(java.util.Map.of("message", "Invoice #" + invoice.getInvoiceNumber() + " deleted successfully"));
     }

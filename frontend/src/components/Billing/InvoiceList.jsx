@@ -18,8 +18,11 @@ export const InvoiceList = ({ onOpenBilling, onSelectInvoiceForPrint, onEditInvo
   };
 
   const filtered = invoices.filter(inv => {
-    const matchesSearch = inv.invoiceNumber.toLowerCase().includes(search.toLowerCase()) ||
-                          inv.customerName.toLowerCase().includes(search.toLowerCase());
+    if (!inv) return false;
+    const invNum = inv.invoiceNumber || '';
+    const custName = inv.customerName || (typeof inv.customer === 'object' ? inv.customer?.name : '') || '';
+    const matchesSearch = invNum.toLowerCase().includes(search.toLowerCase()) ||
+                          custName.toLowerCase().includes(search.toLowerCase());
     const matchesType = filterType === 'ALL' || inv.type === filterType;
     return matchesSearch && matchesType;
   });

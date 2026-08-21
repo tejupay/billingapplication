@@ -211,7 +211,58 @@ export const DataProvider = ({ children }) => {
       if (invRes.status === 'fulfilled' && invRes.value.ok) {
         const invData = await invRes.value.json();
         if (Array.isArray(invData) && invData.length > 0) {
-          setInvoices(invData);
+          const mapped = invData.map(inv => {
+            const customerObj = typeof inv.customer === 'object' ? inv.customer : null;
+            const createdByObj = typeof inv.createdBy === 'object' ? inv.createdBy : null;
+            
+            const customerName = inv.customerName || customerObj?.name || 'Walk-in Customer';
+            const customerPhone = inv.customerPhone || customerObj?.phone || '';
+            const billingAddress = inv.billingAddress || customerObj?.address || '';
+            const shippingAddress = inv.shippingAddress || customerObj?.shippingAddress || customerObj?.address || '';
+            const regNo = inv.regNo || customerObj?.regNo || '';
+            const createdByName = inv.createdByName || createdByObj?.fullName || createdByObj?.username || (typeof inv.createdBy === 'string' ? inv.createdBy : 'Staff');
+            const date = inv.date || (inv.createdAt ? inv.createdAt.split('T')[0] : new Date().toISOString().split('T')[0]);
+
+            const mappedItems = Array.isArray(inv.items) ? inv.items.map((item, idx) => {
+              const prodObj = typeof item.product === 'object' ? item.product : null;
+              return {
+                id: item.id || idx + 1,
+                name: item.productName || item.name || prodObj?.name || 'Item',
+                productName: item.productName || item.name || prodObj?.name || 'Item',
+                batchNo: item.batchNo || '',
+                modelNo: item.modelNo || '',
+                quantity: Number(item.quantity || 1),
+                unit: item.unit || prodObj?.unit || 'Nos',
+                pricePerUnit: Number(item.unitPrice || item.pricePerUnit || prodObj?.sellingPrice || 0),
+                unitPrice: Number(item.unitPrice || item.pricePerUnit || prodObj?.sellingPrice || 0),
+                discountType: item.discountType || 'NONE',
+                discountVal: Number(item.discountVal || 0),
+                taxType: item.taxType || 'NONE',
+                amount: Number(item.totalPrice || item.amount || 0),
+                totalPrice: Number(item.totalPrice || item.amount || 0)
+              };
+            }) : [];
+
+            return {
+              ...inv,
+              customerName,
+              customerPhone,
+              billingAddress,
+              shippingAddress,
+              regNo,
+              createdByName,
+              date,
+              items: mappedItems,
+              grandTotal: Number(inv.grandTotal || inv.subtotal || 0),
+              subtotal: Number(inv.subtotal || inv.grandTotal || 0),
+              paidAmount: Number(inv.paidAmount || 0),
+              balanceAmount: Number(inv.balanceAmount || 0),
+              paymentStatus: inv.paymentStatus || 'PAID',
+              paymentMethod: inv.paymentMethod || 'CASH',
+              type: inv.type || 'TAX_INVOICE'
+            };
+          });
+          setInvoices(mapped);
         }
       }
 

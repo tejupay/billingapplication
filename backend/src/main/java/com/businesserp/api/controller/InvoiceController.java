@@ -25,14 +25,15 @@ public class InvoiceController {
 
     @GetMapping
     public ResponseEntity<List<Invoice>> getInvoices(
-            @RequestParam Long tenantId,
+            @RequestParam(required = false) Long tenantId,
             @RequestParam(required = false) Long userId,
             @RequestParam(required = false) String role
     ) {
+        Long tId = tenantId != null ? tenantId : 1L;
         if ("EMPLOYEE".equalsIgnoreCase(role) && userId != null) {
             return ResponseEntity.ok(invoiceRepo.findByCreatedByIdOrderByCreatedAtDesc(userId));
         }
-        return ResponseEntity.ok(invoiceRepo.findByTenantIdOrderByCreatedAtDesc(tenantId));
+        return ResponseEntity.ok(invoiceRepo.findByTenantIdOrderByCreatedAtDesc(tId));
     }
 
     @PostMapping

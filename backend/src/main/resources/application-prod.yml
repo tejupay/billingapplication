@@ -1,18 +1,18 @@
 spring:
   datasource:
-    url: ${DATABASE_URL:${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/businesserpdb}}
+    url: ${SPRING_DATASOURCE_URL:${DATABASE_URL:jdbc:postgresql://localhost:5432/businesserpdb}}
     driverClassName: org.postgresql.Driver
-    username: ${DB_USERNAME:${SPRING_DATASOURCE_USERNAME:postgres}}
-    password: ${DB_PASSWORD:${SPRING_DATASOURCE_PASSWORD:postgrespassword}}
+    username: ${SPRING_DATASOURCE_USERNAME:${DB_USERNAME:postgres}}
+    password: ${SPRING_DATASOURCE_PASSWORD:${DB_PASSWORD:postgrespassword}}
   jpa:
     database-platform: org.hibernate.dialect.PostgreSQLDialect
     hibernate:
       ddl-auto: update
-    show-sql: false
+    show-sql: true
     properties:
       hibernate:
+        default_schema: public
         format_sql: false
         jdbc:
           lob:
             non_contextual_creation: true
-

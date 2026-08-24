@@ -23,7 +23,7 @@ public class InvoiceItem {
     private Invoice invoice;
 
     @ManyToOne
-    @JoinColumn(name = "product_id", nullable = false)
+    @JoinColumn(name = "product_id", nullable = true)
     private Product product;
 
     @Column(nullable = false)
@@ -37,12 +37,12 @@ public class InvoiceItem {
     @Column(nullable = false, precision = 12, scale = 2)
     private BigDecimal unitPrice;
 
-    @Column(nullable = false, precision = 5, scale = 2)
+    @Column(nullable = true, precision = 5, scale = 2)
     private BigDecimal taxRate; // GST %
 
-    @Column(nullable = false, precision = 12, scale = 2)
+    @Column(nullable = true, precision = 12, scale = 2)
     private BigDecimal taxAmount;
 
-    @Column(nullable = false, precision = 12, scale = 2)
+    @Column(nullable = true, precision = 12, scale = 2)
     private BigDecimal totalPrice;
 }

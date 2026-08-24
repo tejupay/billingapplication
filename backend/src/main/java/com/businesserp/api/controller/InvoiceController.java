@@ -62,21 +62,43 @@ public class InvoiceController {
         }
 
         // Link parent invoice reference on items & adjust stock for TAX_INVOICE
-        for (InvoiceItem item : invoice.getItems()) {
-            item.setInvoice(invoice);
+        if (invoice.getItems() != null) {
+            for (InvoiceItem item : invoice.getItems()) {
+                item.setInvoice(invoice);
 
-            if (invoice.getType() == InvoiceType.TAX_INVOICE && item.getProduct() != null && item.getProduct().getId() != null) {
-                Product product = productRepo.findById(item.getProduct().getId()).orElse(null);
-                if (product != null) {
-                    double newQty = Math.max(0, product.getStockQuantity() - item.getQuantity());
-                    product.setStockQuantity(newQty);
-                    productRepo.save(product);
+                if (item.getProductName() == null || item.getProductName().isBlank()) {
+                    item.setProductName("Item");
                 }
-            } else if (invoice.getType() == InvoiceType.SALES_RETURN && item.getProduct() != null && item.getProduct().getId() != null) {
-                Product product = productRepo.findById(item.getProduct().getId()).orElse(null);
-                if (product != null) {
-                    product.setStockQuantity(product.getStockQuantity() + item.getQuantity());
-                    productRepo.save(product);
+                if (item.getQuantity() == null || item.getQuantity() <= 0) {
+                    item.setQuantity(1.0);
+                }
+                if (item.getUnitPrice() == null) {
+                    item.setUnitPrice(BigDecimal.ZERO);
+                }
+                if (item.getTaxRate() == null) {
+                    item.setTaxRate(BigDecimal.ZERO);
+                }
+                if (item.getTaxAmount() == null) {
+                    item.setTaxAmount(BigDecimal.ZERO);
+                }
+                if (item.getTotalPrice() == null) {
+                    BigDecimal qty = BigDecimal.valueOf(item.getQuantity());
+                    item.setTotalPrice(item.getUnitPrice().multiply(qty));
+                }
+
+                if (invoice.getType() == InvoiceType.TAX_INVOICE && item.getProduct() != null && item.getProduct().getId() != null) {
+                    Product product = productRepo.findById(item.getProduct().getId()).orElse(null);
+                    if (product != null) {
+                        double newQty = Math.max(0, product.getStockQuantity() - item.getQuantity());
+                        product.setStockQuantity(newQty);
+                        productRepo.save(product);
+                    }
+                } else if (invoice.getType() == InvoiceType.SALES_RETURN && item.getProduct() != null && item.getProduct().getId() != null) {
+                    Product product = productRepo.findById(item.getProduct().getId()).orElse(null);
+                    if (product != null) {
+                        product.setStockQuantity(product.getStockQuantity() + item.getQuantity());
+                        productRepo.save(product);
+                    }
                 }
             }
         }

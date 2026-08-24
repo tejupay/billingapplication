@@ -189,7 +189,7 @@ export const DataProvider = ({ children }) => {
 
       if (prodRes.status === 'fulfilled' && prodRes.value.ok) {
         const prodData = await prodRes.value.json();
-        if (Array.isArray(prodData) && prodData.length > 0) {
+        if (Array.isArray(prodData)) {
           const mapped = prodData.map(p => ({
             id: p.id,
             name: p.name,
@@ -210,7 +210,7 @@ export const DataProvider = ({ children }) => {
 
       if (invRes.status === 'fulfilled' && invRes.value.ok) {
         const invData = await invRes.value.json();
-        if (Array.isArray(invData) && invData.length > 0) {
+        if (Array.isArray(invData)) {
           const mapped = invData.map(inv => {
             const customerObj = typeof inv.customer === 'object' ? inv.customer : null;
             const createdByObj = typeof inv.createdBy === 'object' ? inv.createdBy : null;

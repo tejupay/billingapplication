@@ -12,7 +12,7 @@ import javax.sql.DataSource;
 @Configuration
 public class DatabaseConfig {
 
-    private static final String DEFAULT_SUPABASE_URL = "jdbc:postgresql://aws-0-ap-south-1.pooler.supabase.com:6543/postgres?sslmode=require";
+    private static final String DEFAULT_SUPABASE_URL = "jdbc:postgresql://aws-0-ap-south-1.pooler.supabase.com:6543/postgres?sslmode=require&prepareThreshold=0";
     private static final String DEFAULT_SUPABASE_USER = "postgres.sfqxnahbjufvwokoigun";
     private static final String DEFAULT_SUPABASE_PASS = "Tejupay@2007";
 
@@ -69,6 +69,11 @@ public class DatabaseConfig {
         // Auto-append sslmode=require for Supabase & Cloud Postgres if omitted
         if (finalUrl.startsWith("jdbc:postgresql://") && !finalUrl.contains("sslmode=")) {
             finalUrl += (finalUrl.contains("?") ? "&" : "?") + "sslmode=require";
+        }
+
+        // Auto-append prepareThreshold=0 to disable server-side prepared statements for PgBouncer / Supabase Pooler
+        if (finalUrl.startsWith("jdbc:postgresql://") && !finalUrl.contains("prepareThreshold=")) {
+            finalUrl += (finalUrl.contains("?") ? "&" : "?") + "prepareThreshold=0";
         }
 
         System.out.println("=== BUSINESS ERP DB CONFIG ===");

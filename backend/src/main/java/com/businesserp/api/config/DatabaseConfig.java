@@ -12,12 +12,18 @@ import javax.sql.DataSource;
 @Configuration
 public class DatabaseConfig {
 
+    private static final String DEFAULT_SUPABASE_URL = "jdbc:postgresql://aws-0-ap-south-1.pooler.supabase.com:6543/postgres?sslmode=require";
+    private static final String DEFAULT_SUPABASE_USER = "postgres.sfqxnahbjufvwokoigun";
+    private static final String DEFAULT_SUPABASE_PASS = "Tejupay@2007";
+
     @Autowired
     private Environment env;
 
     @Bean
     @Primary
     public DataSource dataSource() {
+        String activeProfile = env.getProperty("spring.profiles.active", "prod");
+        
         String rawUrl = env.getProperty("SPRING_DATASOURCE_URL");
         if (rawUrl == null || rawUrl.isBlank()) {
             rawUrl = env.getProperty("DATABASE_URL");
@@ -25,30 +31,35 @@ public class DatabaseConfig {
         if (rawUrl == null || rawUrl.isBlank()) {
             rawUrl = env.getProperty("spring.datasource.url");
         }
-        if (rawUrl == null || rawUrl.isBlank()) {
-            rawUrl = "jdbc:h2:mem:businesserpdb;DB_CLOSE_DELAY=-1;MODE=PostgreSQL";
+
+        // If localhost or missing in production mode, override directly with Supabase Pooler
+        if ("prod".equalsIgnoreCase(activeProfile) && (rawUrl == null || rawUrl.isBlank() || rawUrl.contains("localhost:5432"))) {
+            rawUrl = DEFAULT_SUPABASE_URL;
+        } else if (rawUrl == null || rawUrl.isBlank()) {
+            rawUrl = DEFAULT_SUPABASE_URL;
         }
 
         String username = env.getProperty("SPRING_DATASOURCE_USERNAME");
         if (username == null || username.isBlank()) {
             username = env.getProperty("DB_USERNAME");
         }
-        if (username == null || username.isBlank()) {
-            username = env.getProperty("spring.datasource.username", "sa");
+        if (username == null || username.isBlank() || "postgres".equalsIgnoreCase(username) || "sa".equalsIgnoreCase(username)) {
+            if (rawUrl.contains("pooler.supabase.com")) {
+                username = DEFAULT_SUPABASE_USER;
+            } else {
+                username = env.getProperty("spring.datasource.username", DEFAULT_SUPABASE_USER);
+            }
         }
 
         String password = env.getProperty("SPRING_DATASOURCE_PASSWORD");
-        if (password == null) {
+        if (password == null || password.isBlank() || "postgrespassword".equalsIgnoreCase(password)) {
             password = env.getProperty("DB_PASSWORD");
         }
-        if (password == null) {
-            password = env.getProperty("spring.datasource.password", "");
+        if (password == null || password.isBlank() || "postgrespassword".equalsIgnoreCase(password)) {
+            password = DEFAULT_SUPABASE_PASS;
         }
 
         String finalUrl = rawUrl.trim();
-        System.out.println("=== BUSINESS ERP DB CONFIG ===");
-        System.out.println("Connecting to Database Host: " + (finalUrl.contains("@") ? finalUrl.replaceAll("://.*@", "://***@") : finalUrl));
-        System.out.println("Connecting with Username: " + username);
 
         // Auto-fix URL format if user pasted standard postgresql:// instead of jdbc:postgresql://
         if (finalUrl.startsWith("postgresql://")) {
@@ -59,6 +70,10 @@ public class DatabaseConfig {
         if (finalUrl.startsWith("jdbc:postgresql://") && !finalUrl.contains("sslmode=")) {
             finalUrl += (finalUrl.contains("?") ? "&" : "?") + "sslmode=require";
         }
+
+        System.out.println("=== BUSINESS ERP DB CONFIG ===");
+        System.out.println("Connecting to Database Host: " + (finalUrl.contains("@") ? finalUrl.replaceAll("://.*@", "://***@") : finalUrl));
+        System.out.println("Connecting with Username: " + username);
 
         DataSourceBuilder<?> builder = DataSourceBuilder.create().url(finalUrl);
 

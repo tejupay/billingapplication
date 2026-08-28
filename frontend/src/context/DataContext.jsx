@@ -389,6 +389,18 @@ export const DataProvider = ({ children }) => {
     }
   };
 
+  const mapPaymentMethod = (method) => {
+    if (!method) return 'CASH';
+    const m = String(method).toUpperCase();
+    if (['CASH', 'UPI', 'CARD', 'NET_BANKING', 'CREDIT', 'ONLINE', 'ACCOUNT_TRANSFER'].includes(m)) {
+      return m;
+    }
+    if (m.includes('UPI') || m.includes('ONLINE')) return 'UPI';
+    if (m.includes('CARD')) return 'CARD';
+    if (m.includes('BANK') || m.includes('TRANSFER')) return 'NET_BANKING';
+    return 'CASH';
+  };
+
   const addInvoice = async (invoice, user = {}) => {
     const invNumStr = invoice.invoiceNumber || `EV-${Date.now().toString().slice(-6)}`;
     const newInv = {
@@ -406,7 +418,7 @@ export const DataProvider = ({ children }) => {
       paidAmount: Number(invoice.paidAmount || 0),
       balanceAmount: Number(invoice.balanceAmount || 0),
       paymentStatus: invoice.paymentStatus || 'PAID',
-      paymentMethod: invoice.paymentMethod || 'CASH',
+      paymentMethod: mapPaymentMethod(invoice.paymentMethod || invoice.paymentType),
       type: invoice.type || 'TAX_INVOICE',
       ...invoice
     };
@@ -448,7 +460,7 @@ export const DataProvider = ({ children }) => {
         paidAmount: newInv.paidAmount,
         balanceAmount: newInv.balanceAmount,
         paymentStatus: newInv.paymentStatus,
-        paymentMethod: newInv.paymentMethod,
+        paymentMethod: mapPaymentMethod(newInv.paymentMethod || newInv.paymentType),
         notes: newInv.notes || '',
         customer: {
           name: newInv.customerName || newInv.customer?.name || 'Walk-in Customer',

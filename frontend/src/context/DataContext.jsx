@@ -1,17 +1,17 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import { API_BASE_URL, WS_BASE_URL } from '../config';
+import { API_BASE_URL } from '../config';
 
 const DataContext = createContext();
 
 export const INITIAL_COMPANY_DETAILS = {
-  name: 'GreenDrive EV Motors',
+  name: 'Yashas Ev Service',
   tagline: 'Electric Two-Wheeler Sales, Battery & Multi-Brand Service Station',
-  phone: '9876543210',
-  altPhone: '9123456789',
-  email: 'service@greendriveev.com',
+  phone: '767642061',
+  altPhone: '6364687779',
+  email: 'yrtmotos@gmail.com',
   gstin: '29EVHUB1234F1Z5',
   address: 'No. 42, EV Hub Road, Near Bus Terminal, Bengaluru, Karnataka - 560001',
-  upiId: 'greendriveev@paytm',
+  upiId: '8105979580-of5a-2@ybl',
   bankName: 'HDFC Bank',
   accountNo: '50200088991122',
   ifscCode: 'HDFC0001234',
@@ -189,7 +189,7 @@ export const DataProvider = ({ children }) => {
 
       if (prodRes.status === 'fulfilled' && prodRes.value.ok) {
         const prodData = await prodRes.value.json();
-        if (Array.isArray(prodData)) {
+        if (Array.isArray(prodData) && prodData.length > 0) {
           const mapped = prodData.map(p => ({
             id: p.id,
             name: p.name,
@@ -210,11 +210,11 @@ export const DataProvider = ({ children }) => {
 
       if (invRes.status === 'fulfilled' && invRes.value.ok) {
         const invData = await invRes.value.json();
-        if (Array.isArray(invData)) {
+        if (Array.isArray(invData) && invData.length > 0) {
           const mapped = invData.map(inv => {
             const customerObj = typeof inv.customer === 'object' ? inv.customer : null;
             const createdByObj = typeof inv.createdBy === 'object' ? inv.createdBy : null;
-            
+
             const customerName = inv.customerName || customerObj?.name || 'Walk-in Customer';
             const customerPhone = inv.customerPhone || customerObj?.phone || '';
             const billingAddress = inv.billingAddress || customerObj?.address || '';
@@ -276,74 +276,6 @@ export const DataProvider = ({ children }) => {
       console.log('Skipping backend sync, using local state:', e.message);
     }
   }, []);
-
-  const [isOnline, setIsOnline] = useState(() => typeof navigator !== 'undefined' ? navigator.onLine : true);
-  const [wsConnected, setWsConnected] = useState(false);
-
-  // Monitor network online / offline status
-  useEffect(() => {
-    const handleOnline = () => {
-      setIsOnline(true);
-      fetchFromBackend();
-    };
-    const handleOffline = () => {
-      setIsOnline(false);
-    };
-
-    window.addEventListener('online', handleOnline);
-    window.addEventListener('offline', handleOffline);
-
-    return () => {
-      window.removeEventListener('online', handleOnline);
-      window.removeEventListener('offline', handleOffline);
-    };
-  }, [fetchFromBackend]);
-
-  // Connect WebSocket for instant real-time synchronization
-  useEffect(() => {
-    let ws = null;
-    let reconnectTimer = null;
-
-    const connectWs = () => {
-      try {
-        const wsUrl = `${WS_BASE_URL}/ws-billing-native`;
-        ws = new WebSocket(wsUrl);
-
-        ws.onopen = () => {
-          setWsConnected(true);
-        };
-
-        ws.onmessage = (event) => {
-          try {
-            const data = JSON.parse(event.data);
-            if (data) {
-              fetchFromBackend();
-            }
-          } catch (e) {
-            fetchFromBackend();
-          }
-        };
-
-        ws.onerror = () => {
-          setWsConnected(false);
-        };
-
-        ws.onclose = () => {
-          setWsConnected(false);
-          reconnectTimer = setTimeout(connectWs, 5000);
-        };
-      } catch (e) {
-        setWsConnected(false);
-      }
-    };
-
-    connectWs();
-
-    return () => {
-      if (ws) ws.close();
-      if (reconnectTimer) clearTimeout(reconnectTimer);
-    };
-  }, [fetchFromBackend]);
 
   // Poll backend every 3 seconds so edits from any phone sync instantly to all other phones
   useEffect(() => {
@@ -570,8 +502,6 @@ export const DataProvider = ({ children }) => {
       recordCustomerPayment,
       addExpense,
       addAuditLog,
-      isOnline,
-      wsConnected,
       refreshData: fetchFromBackend
     }}>
       {children}

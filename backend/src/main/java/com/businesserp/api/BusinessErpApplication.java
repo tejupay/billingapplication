@@ -13,6 +13,8 @@ import java.time.LocalDate;
 import java.util.List;
 
 @SpringBootApplication
+@org.springframework.data.jpa.repository.config.EnableJpaRepositories("com.businesserp.api.repository")
+@org.springframework.boot.autoconfigure.domain.EntityScan("com.businesserp.api.model")
 public class BusinessErpApplication {
 
     public static void main(String[] args) {

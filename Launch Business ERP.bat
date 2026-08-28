@@ -16,7 +16,7 @@ set "JAVA_HOME=C:\Program Files\Java\jdk-17"
 netstat -ano | findstr :8080 >nul
 if %errorlevel% neq 0 (
     echo [INFO] Starting Spring Boot REST Backend on port 8080...
-    start /min "Business ERP Backend" cmd /c "set JAVA_HOME=C:\Program Files\Java\jdk-17&& cd backend && mvnw.cmd spring-boot:run"
+    start /min "Business ERP Backend" cmd /c "set JAVA_HOME=C:\Program Files\Java\jdk-17&& cd backend && mvnw.cmd spring-boot:run -Dspring.profiles.active=dev"
 )
 
 :: Check root node_modules

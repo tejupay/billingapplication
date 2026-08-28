@@ -2,8 +2,8 @@ spring:
   datasource:
     url: ${SPRING_DATASOURCE_URL:${DATABASE_URL:jdbc:postgresql://aws-0-ap-south-1.pooler.supabase.com:6543/postgres?sslmode=require&prepareThreshold=0}}
     driverClassName: org.postgresql.Driver
-    username: ${SPRING_DATASOURCE_USERNAME:${DB_USERNAME:postgres.sfqxnahbjufvwokoigun}}
-    password: ${SPRING_DATASOURCE_PASSWORD:${DB_PASSWORD:Tejupay@2007}}
+    username: ${SPRING_DATASOURCE_USERNAME:${DB_USERNAME:postgres.mogxxfeyxbwfboyppows}}
+    password: ${SPRING_DATASOURCE_PASSWORD:${DB_PASSWORD:tejutejas@2007}}
   jpa:
     database-platform: org.hibernate.dialect.PostgreSQLDialect
     hibernate:

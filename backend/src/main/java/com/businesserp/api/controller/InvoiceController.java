@@ -47,9 +47,29 @@ public class InvoiceController {
         Long uId = userId != null ? userId : 1L;
 
         Tenant tenant = tenantRepo.findById(tId)
-                .orElseGet(() -> tenantRepo.findAll().stream().findFirst().orElseThrow(() -> new RuntimeException("Tenant not found")));
-        User user = userRepo.findById(uId)
-                .orElseGet(() -> userRepo.findAll().stream().findFirst().orElseThrow(() -> new RuntimeException("User not found")));
+                .orElseGet(() -> tenantRepo.findAll().stream().findFirst()
+                .orElseGet(() -> tenantRepo.save(Tenant.builder()
+                        .name("Default ERP Business")
+                        .email("admin@erp.com")
+                        .phone("9999999999")
+                        .address("India")
+                        .build())));
+
+        User user = (userId != null ? userRepo.findById(uId).orElse(null) : null);
+        if (user == null) {
+            user = userRepo.findAll().stream().findFirst()
+                    .orElseGet(() -> userRepo.save(User.builder()
+                            .username("owner")
+                            .email("owner@erp.com")
+                            .fullName("ERP Owner")
+                            .password("123456789")
+                            .role(Role.OWNER)
+                            .tenant(tenant)
+                            .build()));
+        }
+
+        // Clear client-side temporary timestamp ID so JPA auto-generates a primary key via PostgreSQL SERIAL
+        invoice.setId(null);
 
         invoice.setTenant(tenant);
         invoice.setCreatedBy(user);
@@ -61,9 +81,30 @@ public class InvoiceController {
             invoice.setInvoiceNumber("INV-" + System.currentTimeMillis() / 1000 + "-" + UUID.randomUUID().toString().substring(0, 4).toUpperCase());
         }
 
+        // Link or auto-create Customer
+        if (invoice.getCustomer() != null && invoice.getCustomer().getId() != null) {
+            Customer customer = customerRepo.findById(invoice.getCustomer().getId()).orElse(null);
+            invoice.setCustomer(customer);
+        } else if (invoice.getCustomer() != null && invoice.getCustomer().getName() != null && !invoice.getCustomer().getName().isBlank()) {
+            String cName = invoice.getCustomer().getName().trim();
+            Customer existing = customerRepo.findByTenantId(tId).stream()
+                    .filter(c -> c.getName().equalsIgnoreCase(cName))
+                    .findFirst()
+                    .orElseGet(() -> customerRepo.save(Customer.builder()
+                            .name(cName)
+                            .phone(invoice.getCustomer().getPhone() != null ? invoice.getCustomer().getPhone() : "")
+                            .address(invoice.getCustomer().getAddress() != null ? invoice.getCustomer().getAddress() : "")
+                            .creditLimit(new BigDecimal("10000.00"))
+                            .pendingBalance(BigDecimal.ZERO)
+                            .tenant(tenant)
+                            .build()));
+            invoice.setCustomer(existing);
+        }
+
         // Link parent invoice reference on items & adjust stock for TAX_INVOICE
         if (invoice.getItems() != null) {
             for (InvoiceItem item : invoice.getItems()) {
+                item.setId(null); // Clear temporary client-side ID
                 item.setInvoice(invoice);
 
                 if (item.getProductName() == null || item.getProductName().isBlank()) {
@@ -104,17 +145,17 @@ public class InvoiceController {
         }
 
         // Customer credit/balance update if unpaid / partial
-        if (invoice.getCustomer() != null && invoice.getCustomer().getId() != null) {
-            Customer customer = customerRepo.findById(invoice.getCustomer().getId()).orElse(null);
-            if (customer != null) {
-                BigDecimal balanceDue = invoice.getBalanceAmount();
-                if (invoice.getType() == InvoiceType.SALES_RETURN) {
-                    customer.setPendingBalance(customer.getPendingBalance().subtract(balanceDue).max(BigDecimal.ZERO));
-                } else if (invoice.getType() == InvoiceType.TAX_INVOICE && balanceDue != null && balanceDue.compareTo(BigDecimal.ZERO) > 0) {
-                    customer.setPendingBalance(customer.getPendingBalance().add(balanceDue));
-                }
-                customerRepo.save(customer);
+        if (invoice.getCustomer() != null) {
+            Customer customer = invoice.getCustomer();
+            BigDecimal balanceDue = invoice.getBalanceAmount() != null ? invoice.getBalanceAmount() : BigDecimal.ZERO;
+            if (invoice.getType() == InvoiceType.SALES_RETURN) {
+                BigDecimal currentBal = customer.getPendingBalance() != null ? customer.getPendingBalance() : BigDecimal.ZERO;
+                customer.setPendingBalance(currentBal.subtract(balanceDue).max(BigDecimal.ZERO));
+            } else if (invoice.getType() == InvoiceType.TAX_INVOICE && balanceDue.compareTo(BigDecimal.ZERO) > 0) {
+                BigDecimal currentBal = customer.getPendingBalance() != null ? customer.getPendingBalance() : BigDecimal.ZERO;
+                customer.setPendingBalance(currentBal.add(balanceDue));
             }
+            customerRepo.save(customer);
         }
 
         Invoice saved = invoiceRepo.save(invoice);

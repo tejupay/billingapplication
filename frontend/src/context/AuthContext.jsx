@@ -74,8 +74,12 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     if (currentUser) {
       localStorage.setItem('erp_user', JSON.stringify(currentUser));
+      if (currentUser.token) {
+        localStorage.setItem('erp_token', currentUser.token);
+      }
     } else {
       localStorage.removeItem('erp_user');
+      localStorage.removeItem('erp_token');
     }
   }, [currentUser]);
 
@@ -83,10 +87,44 @@ export const AuthProvider = ({ children }) => {
     localStorage.setItem('erp_accounts', JSON.stringify(accounts));
   }, [accounts]);
 
+  // Ensure active currentUser always has a valid JWT token
+  useEffect(() => {
+    const ensureValidToken = async () => {
+      if (currentUser && !currentUser.token && currentUser.username) {
+        try {
+          const pass = currentUser.password || '123456789';
+          const res = await fetch(`${API_BASE_URL}/api/auth/login`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username: currentUser.username, password: pass })
+          });
+          if (res.ok) {
+            const data = await res.json();
+            if (data.token) {
+              setCurrentUser(prev => ({
+                ...prev,
+                token: data.token,
+                role: data.role || prev.role,
+                tenantId: data.tenantId || prev.tenantId
+              }));
+              localStorage.setItem('erp_token', data.token);
+            }
+          }
+        } catch (_) {}
+      }
+    };
+    ensureValidToken();
+  }, [currentUser]);
+
   // Fetch & sync user accounts from backend database so all devices have identical accounts
   const fetchBackendUsers = useCallback(async () => {
     try {
-      const res = await fetch(`${API_BASE_URL}/api/owner/users?tenantId=1`);
+      const token = localStorage.getItem('erp_token');
+      const headers = { 'Content-Type': 'application/json' };
+      if (token && token !== 'undefined' && token !== 'null') {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+      const res = await fetch(`${API_BASE_URL}/api/owner/users?tenantId=1`, { headers });
       if (res.ok) {
         const users = await res.json();
         if (Array.isArray(users) && users.length > 0) {
@@ -206,9 +244,14 @@ export const AuthProvider = ({ children }) => {
     }
 
     try {
+      const token = localStorage.getItem('erp_token');
+      const headers = { 'Content-Type': 'application/json' };
+      if (token && token !== 'undefined' && token !== 'null') {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
       await fetch(`${API_BASE_URL}/api/owner/users/${userId}`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers,
         body: JSON.stringify({ password: newPassword })
       });
       fetchBackendUsers();
@@ -233,9 +276,14 @@ export const AuthProvider = ({ children }) => {
 
     // Save account to cloud backend database so ALL phones/laptops can log in instantly
     try {
+      const token = localStorage.getItem('erp_token');
+      const headers = { 'Content-Type': 'application/json' };
+      if (token && token !== 'undefined' && token !== 'null') {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
       await fetch(`${API_BASE_URL}/api/owner/users?tenantId=1`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers,
         body: JSON.stringify({
           username: newUser.username,
           email: newUser.email || newUser.username,

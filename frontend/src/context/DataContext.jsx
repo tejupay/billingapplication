@@ -22,6 +22,17 @@ const getAuthUserId = () => {
   return (u?.id || 1);
 };
 
+// --- Helper: build request headers with JWT Authorization ---
+const getAuthHeaders = () => {
+  const user = getAuthUser();
+  const token = user?.token || localStorage.getItem('erp_token') || localStorage.getItem('token');
+  const headers = { 'Content-Type': 'application/json' };
+  if (token && token !== 'undefined' && token !== 'null') {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+  return headers;
+};
+
 // --- Payment method normalizer ---
 const mapPaymentMethod = (method) => {
   if (!method) return 'CASH';
@@ -224,10 +235,11 @@ export const DataProvider = ({ children }) => {
     try {
       // FIX 8: use tenantId from authenticated user — never hardcode 1
       const tenantId = getAuthTenantId();
+      const headers = getAuthHeaders();
       const [prodRes, invRes, custRes] = await Promise.allSettled([
-        fetch(`${API_BASE_URL}/api/products?tenantId=${tenantId}`),
-        fetch(`${API_BASE_URL}/api/invoices?tenantId=${tenantId}`),
-        fetch(`${API_BASE_URL}/api/customers?tenantId=${tenantId}`)
+        fetch(`${API_BASE_URL}/api/products?tenantId=${tenantId}`, { headers }),
+        fetch(`${API_BASE_URL}/api/invoices?tenantId=${tenantId}`, { headers }),
+        fetch(`${API_BASE_URL}/api/customers?tenantId=${tenantId}`, { headers })
       ]);
 
       const isConnected = [prodRes, invRes, custRes].some(r => r.status === 'fulfilled' && r.value.ok);
@@ -388,7 +400,7 @@ export const DataProvider = ({ children }) => {
       const tenantId = getAuthTenantId();
       await fetch(`${API_BASE_URL}/api/products?tenantId=${tenantId}`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: getAuthHeaders(),
         body: JSON.stringify(product)
       });
       fetchFromBackend();
@@ -405,7 +417,7 @@ export const DataProvider = ({ children }) => {
     addAuditLog('PRODUCT_DELETED', user?.username || 'owner', user?.role || 'OWNER', `Deleted inventory item ${target?.name || productId}`);
 
     try {
-      await fetch(`${API_BASE_URL}/api/products/${productId}`, { method: 'DELETE' });
+      await fetch(`${API_BASE_URL}/api/products/${productId}`, { method: 'DELETE', headers: getAuthHeaders() });
       fetchFromBackend();
     } catch (e) {
       console.error('Product delete failed:', e.message);
@@ -423,7 +435,7 @@ export const DataProvider = ({ children }) => {
     addAuditLog('STOCK_ADJUSTED', user?.username, user?.role, `Stock ${mode} by ${delta} for part #${productId}`);
 
     try {
-      await fetch(`${API_BASE_URL}/api/products/${productId}/stock?quantity=${delta}&mode=${mode}`, { method: 'PUT' });
+      await fetch(`${API_BASE_URL}/api/products/${productId}/stock?quantity=${delta}&mode=${mode}`, { method: 'PUT', headers: getAuthHeaders() });
       fetchFromBackend();
     } catch (e) {
       console.error('Stock adjustment failed:', e.message);
@@ -487,7 +499,7 @@ export const DataProvider = ({ children }) => {
     // POST to backend first — do NOT optimistically add to state before confirmation
     const res = await fetch(`${API_BASE_URL}/api/invoices?tenantId=${tenantId}&userId=${uId}`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: getAuthHeaders(),
       body: JSON.stringify(backendPayload)
     });
 
@@ -522,7 +534,7 @@ export const DataProvider = ({ children }) => {
   // FIX 7: deleteInvoice — backend FIRST, then refresh from DB
   const deleteInvoice = async (invoiceId, user = {}) => {
     try {
-      const res = await fetch(`${API_BASE_URL}/api/invoices/${invoiceId}`, { method: 'DELETE' });
+      const res = await fetch(`${API_BASE_URL}/api/invoices/${invoiceId}`, { method: 'DELETE', headers: getAuthHeaders() });
       if (!res.ok) {
         throw new Error(`Delete failed: server returned ${res.status}`);
       }
@@ -542,7 +554,7 @@ export const DataProvider = ({ children }) => {
       const tenantId = getAuthTenantId();
       await fetch(`${API_BASE_URL}/api/customers?tenantId=${tenantId}`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: getAuthHeaders(),
         body: JSON.stringify(newCust)
       });
       fetchFromBackend();
@@ -556,7 +568,7 @@ export const DataProvider = ({ children }) => {
     setCustomers(prev => prev.filter(c => c.id !== customerId));
     addAuditLog('CUSTOMER_DELETED', user?.username || 'owner', user?.role || 'OWNER', `Deleted customer profile ${target?.name || customerId}`);
     try {
-      await fetch(`${API_BASE_URL}/api/customers/${customerId}`, { method: 'DELETE' });
+      await fetch(`${API_BASE_URL}/api/customers/${customerId}`, { method: 'DELETE', headers: getAuthHeaders() });
       fetchFromBackend();
     } catch (e) {
       console.error('Customer delete failed:', e.message);

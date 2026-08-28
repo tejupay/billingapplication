@@ -36,6 +36,7 @@ public class User {
     @JoinColumn(name = "tenant_id", nullable = false)
     private Tenant tenant;
 
+    @Builder.Default
     private boolean active = true;
     private LocalDateTime lastLogin;
     private LocalDateTime createdAt;

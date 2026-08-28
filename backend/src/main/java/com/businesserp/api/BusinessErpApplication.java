@@ -203,6 +203,23 @@ public class BusinessErpApplication {
                 System.out.println("Primary Admin Account Created:");
                 System.out.println(" - OWNER (Admin) : admin / admin123");
             }
+
+            // Ensure all user accounts in database are active with valid BCrypt hashed passwords
+            List<User> allUsers = userRepo.findAll();
+            for (User u : allUsers) {
+                boolean modified = false;
+                if (!u.isActive()) {
+                    u.setActive(true);
+                    modified = true;
+                }
+                if (u.getPassword() != null && !u.getPassword().startsWith("$2a$") && !u.getPassword().startsWith("$2b$")) {
+                    u.setPassword(encoder.encode(u.getPassword()));
+                    modified = true;
+                }
+                if (modified) {
+                    userRepo.save(u);
+                }
+            }
         };
     }
 }

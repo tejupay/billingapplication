@@ -219,7 +219,7 @@ export const DataProvider = ({ children }) => {
 
       if (invRes.status === 'fulfilled' && invRes.value.ok) {
         const invData = await invRes.value.json();
-        if (Array.isArray(invData) && invData.length > 0) {
+        if (Array.isArray(invData)) {
           const mapped = invData.map(inv => {
             const customerObj = typeof inv.customer === 'object' ? inv.customer : null;
             const createdByObj = typeof inv.createdBy === 'object' ? inv.createdBy : null;
@@ -277,7 +277,7 @@ export const DataProvider = ({ children }) => {
 
       if (custRes.status === 'fulfilled' && custRes.value.ok) {
         const custData = await custRes.value.json();
-        if (Array.isArray(custData) && custData.length > 0) {
+        if (Array.isArray(custData)) {
           setCustomers(custData);
         }
       }
@@ -393,11 +393,17 @@ export const DataProvider = ({ children }) => {
       date: invoice.date || new Date().toISOString().split('T')[0],
       createdBy: user?.username || 'owner',
       createdByName: user?.fullName || 'EV Service Admin',
-      subtotal: invoice.subtotal || invoice.grandTotal || 0,
-      cgstAmount: invoice.cgstAmount || 0,
-      sgstAmount: invoice.sgstAmount || 0,
-      igstAmount: invoice.igstAmount || 0,
-      discountAmount: invoice.discountAmount || 0,
+      subtotal: Number(invoice.subtotal || invoice.grandTotal || 0),
+      cgstAmount: Number(invoice.cgstAmount || 0),
+      sgstAmount: Number(invoice.sgstAmount || 0),
+      igstAmount: Number(invoice.igstAmount || 0),
+      discountAmount: Number(invoice.discountAmount || 0),
+      grandTotal: Number(invoice.grandTotal || 0),
+      paidAmount: Number(invoice.paidAmount || 0),
+      balanceAmount: Number(invoice.balanceAmount || 0),
+      paymentStatus: invoice.paymentStatus || 'PAID',
+      paymentMethod: invoice.paymentMethod || 'CASH',
+      type: invoice.type || 'TAX_INVOICE',
       ...invoice
     };
 
@@ -426,14 +432,44 @@ export const DataProvider = ({ children }) => {
 
     try {
       const uId = user?.id || 1;
+      const backendPayload = {
+        invoiceNumber: newInv.invoiceNumber,
+        type: newInv.type || 'TAX_INVOICE',
+        subtotal: newInv.subtotal,
+        cgstAmount: newInv.cgstAmount,
+        sgstAmount: newInv.sgstAmount,
+        igstAmount: newInv.igstAmount,
+        discountAmount: newInv.discountAmount,
+        grandTotal: newInv.grandTotal,
+        paidAmount: newInv.paidAmount,
+        balanceAmount: newInv.balanceAmount,
+        paymentStatus: newInv.paymentStatus,
+        paymentMethod: newInv.paymentMethod,
+        notes: newInv.notes || '',
+        customer: {
+          name: newInv.customerName || newInv.customer?.name || 'Walk-in Customer',
+          phone: newInv.customerPhone || newInv.customer?.phone || '',
+          address: newInv.billingAddress || newInv.customer?.address || ''
+        },
+        items: (newInv.items || []).map(item => ({
+          productName: item.productName || item.name || 'Item',
+          hsnCode: item.hsnCode || '',
+          quantity: Number(item.quantity || 1),
+          unitPrice: Number(item.unitPrice || item.pricePerUnit || 0),
+          taxRate: Number(item.taxRate || 18),
+          taxAmount: Number(item.taxAmount || 0),
+          totalPrice: Number(item.totalPrice || item.amount || 0)
+        }))
+      };
+
       const res = await fetch(`${API_BASE_URL}/api/invoices?tenantId=1&userId=${uId}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(newInv)
+        body: JSON.stringify(backendPayload)
       });
       if (res.ok) {
         const savedFromBackend = await res.json();
-        fetchFromBackend();
+        await fetchFromBackend();
         return savedFromBackend;
       }
     } catch (e) {

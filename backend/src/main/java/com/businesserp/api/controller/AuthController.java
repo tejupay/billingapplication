@@ -35,12 +35,32 @@ public class AuthController {
         User user = userRepo.findByUsername(request.getUsername())
                 .orElseGet(() -> userRepo.findByEmail(request.getUsername()).orElse(null));
 
-        if (user == null || !passwordEncoder.matches(request.getPassword(), user.getPassword())) {
+        if (user == null) {
+            return ResponseEntity.badRequest().body(Map.of("message", "Invalid username/email or password"));
+        }
+
+        boolean passwordMatches = false;
+        if (user.getPassword() != null) {
+            if (user.getPassword().startsWith("$2a$") || user.getPassword().startsWith("$2b$")) {
+                passwordMatches = passwordEncoder.matches(request.getPassword(), user.getPassword());
+            } else {
+                passwordMatches = request.getPassword().equals(user.getPassword());
+                if (passwordMatches) {
+                    user.setPassword(passwordEncoder.encode(request.getPassword()));
+                }
+            }
+        }
+
+        if (!passwordMatches) {
             return ResponseEntity.badRequest().body(Map.of("message", "Invalid username/email or password"));
         }
 
         if (!user.isActive()) {
-            return ResponseEntity.badRequest().body(Map.of("message", "Account is deactivated by owner"));
+            if (user.getRole() == Role.OWNER) {
+                user.setActive(true);
+            } else {
+                return ResponseEntity.badRequest().body(Map.of("message", "Account is deactivated by owner"));
+            }
         }
 
         user.setLastLogin(LocalDateTime.now());

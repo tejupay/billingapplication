@@ -178,6 +178,9 @@ export const DataProvider = ({ children }) => {
   useEffect(() => { localStorage.setItem('erp_audit_logs', JSON.stringify(auditLogs)); }, [auditLogs]);
   useEffect(() => { localStorage.setItem('erp_expenses', JSON.stringify(expenses)); }, [expenses]);
 
+  const [isOnline, setIsOnline] = useState(() => typeof navigator !== 'undefined' ? navigator.onLine : true);
+  const [wsConnected, setWsConnected] = useState(true);
+
   // Sync across all phones/devices by fetching backend state
   const fetchFromBackend = useCallback(async () => {
     try {
@@ -186,6 +189,12 @@ export const DataProvider = ({ children }) => {
         fetch(`${API_BASE_URL}/api/invoices?tenantId=1`),
         fetch(`${API_BASE_URL}/api/customers?tenantId=1`)
       ]);
+
+      const isConnected = [prodRes, invRes, custRes].some(r => r.status === 'fulfilled' && r.value.ok);
+      if (isConnected) {
+        setIsOnline(true);
+        setWsConnected(true);
+      }
 
       if (prodRes.status === 'fulfilled' && prodRes.value.ok) {
         const prodData = await prodRes.value.json();
@@ -275,6 +284,18 @@ export const DataProvider = ({ children }) => {
     } catch (e) {
       console.log('Skipping backend sync, using local state:', e.message);
     }
+  }, []);
+
+  // Monitor online/offline network status
+  useEffect(() => {
+    const handleOnline = () => setIsOnline(true);
+    const handleOffline = () => setIsOnline(false);
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
   }, []);
 
   // Poll backend every 3 seconds so edits from any phone sync instantly to all other phones
@@ -502,6 +523,8 @@ export const DataProvider = ({ children }) => {
       recordCustomerPayment,
       addExpense,
       addAuditLog,
+      isOnline,
+      wsConnected,
       refreshData: fetchFromBackend
     }}>
       {children}

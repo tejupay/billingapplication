@@ -77,7 +77,7 @@ public class InvoiceController {
         if (invoice.getType() == null) {
             invoice.setType(InvoiceType.TAX_INVOICE);
         }
-        if (invoice.getInvoiceNumber() == null || invoice.getInvoiceNumber().isEmpty()) {
+        if (invoice.getInvoiceNumber() == null || invoice.getInvoiceNumber().isEmpty() || invoiceRepo.findByInvoiceNumber(invoice.getInvoiceNumber()).isPresent()) {
             invoice.setInvoiceNumber("INV-" + System.currentTimeMillis() / 1000 + "-" + UUID.randomUUID().toString().substring(0, 4).toUpperCase());
         }
 

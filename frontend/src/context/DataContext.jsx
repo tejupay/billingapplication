@@ -271,7 +271,11 @@ export const DataProvider = ({ children }) => {
               type: inv.type || 'TAX_INVOICE'
             };
           });
-          setInvoices(mapped);
+          setInvoices(prev => {
+            const backendInvNums = new Set(mapped.map(i => i.invoiceNumber));
+            const localOnly = (prev || []).filter(i => i && i.invoiceNumber && !backendInvNums.has(i.invoiceNumber));
+            return [...mapped, ...localOnly];
+          });
         }
       }
 

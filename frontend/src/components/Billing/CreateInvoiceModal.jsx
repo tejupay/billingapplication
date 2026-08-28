@@ -312,7 +312,7 @@ export const CreateInvoiceModal = ({ isOpen, onClose, onPrintInvoice, editingInv
       }
     } catch (e) {
       console.error('Error saving invoice:', e);
-      setErrMessage('Error saving invoice.');
+      setErrMessage(e?.message || 'Invoice could not be saved to the server. Please check your connection and try again.');
     }
   };
 

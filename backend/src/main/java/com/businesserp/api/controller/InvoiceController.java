@@ -3,7 +3,10 @@ package com.businesserp.api.controller;
 import com.businesserp.api.model.*;
 import com.businesserp.api.repository.*;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.CacheControl;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
@@ -31,12 +34,22 @@ public class InvoiceController {
             @RequestParam(required = false) String role
     ) {
         Long tId = tenantId != null ? tenantId : 1L;
+        List<Invoice> result;
         if ("EMPLOYEE".equalsIgnoreCase(role) && userId != null) {
-            return ResponseEntity.ok(invoiceRepo.findByCreatedByIdOrderByCreatedAtDesc(userId));
+            result = invoiceRepo.findByCreatedByIdOrderByCreatedAtDesc(userId);
+        } else {
+            result = invoiceRepo.findByTenantIdOrderByCreatedAtDesc(tId);
         }
-        return ResponseEntity.ok(invoiceRepo.findByTenantIdOrderByCreatedAtDesc(tId));
+        // FIX 11: prevent browser/CDN caching of invoice lists — always serve fresh DB data
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CACHE_CONTROL, CacheControl.noStore().getHeaderValue())
+                .header(HttpHeaders.PRAGMA, "no-cache")
+                .body(result);
     }
 
+    // FIX 10: @Transactional ensures invoice + items + stock + customer balance + audit log are atomic.
+    // If any step fails, the entire operation is rolled back — no partial saves.
+    @Transactional
     @PostMapping
     public ResponseEntity<Invoice> createInvoice(
             @RequestBody Invoice invoice,

@@ -1,5 +1,37 @@
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import { API_BASE_URL } from '../config';
+
+// --- Helper: read current authenticated user from localStorage ---
+const getAuthUser = () => {
+  try {
+    const raw = localStorage.getItem('erp_user') || localStorage.getItem('user');
+    if (raw) return JSON.parse(raw);
+  } catch (_) {}
+  return null;
+};
+
+// --- Helper: resolve tenantId from auth user, fallback to 1 ---
+const getAuthTenantId = () => {
+  const u = getAuthUser();
+  return (u?.tenantId || u?.tenant?.id || 1);
+};
+
+// --- Helper: resolve userId from auth user, fallback to 1 ---
+const getAuthUserId = () => {
+  const u = getAuthUser();
+  return (u?.id || 1);
+};
+
+// --- Payment method normalizer ---
+const mapPaymentMethod = (method) => {
+  if (!method) return 'CASH';
+  const m = String(method).toUpperCase();
+  if (['CASH', 'UPI', 'CARD', 'NET_BANKING', 'CREDIT', 'ONLINE', 'ACCOUNT_TRANSFER'].includes(m)) return m;
+  if (m.includes('UPI') || m.includes('ONLINE')) return 'UPI';
+  if (m.includes('CARD')) return 'CARD';
+  if (m.includes('BANK') || m.includes('TRANSFER')) return 'NET_BANKING';
+  return 'CASH';
+};
 
 const DataContext = createContext();
 
@@ -155,10 +187,10 @@ export const DataProvider = ({ children }) => {
     return saved ? JSON.parse(saved) : INITIAL_CUSTOMERS;
   });
 
-  const [invoices, setInvoices] = useState(() => {
-    const saved = localStorage.getItem('erp_invoices');
-    return saved ? JSON.parse(saved) : [];
-  });
+  // FIX 1: invoices NEVER initialized from localStorage.
+  // The database is the single source of truth.
+  // Invoices start empty and are populated exclusively from the backend.
+  const [invoices, setInvoices] = useState([]);
 
   const [auditLogs, setAuditLogs] = useState(() => {
     const saved = localStorage.getItem('erp_audit_logs');
@@ -170,31 +202,37 @@ export const DataProvider = ({ children }) => {
     return saved ? JSON.parse(saved) : [];
   });
 
-  // Sync to local storage as offline backup
+  // FIX 2: Only non-invoice shared data is persisted to localStorage.
+  // Invoices are NOT saved to localStorage — they come exclusively from the backend.
   useEffect(() => { localStorage.setItem('erp_shop_details', JSON.stringify(shopDetails)); }, [shopDetails]);
   useEffect(() => { localStorage.setItem('erp_products', JSON.stringify(products)); }, [products]);
   useEffect(() => { localStorage.setItem('erp_customers', JSON.stringify(customers)); }, [customers]);
-  useEffect(() => { localStorage.setItem('erp_invoices', JSON.stringify(invoices)); }, [invoices]);
   useEffect(() => { localStorage.setItem('erp_audit_logs', JSON.stringify(auditLogs)); }, [auditLogs]);
   useEffect(() => { localStorage.setItem('erp_expenses', JSON.stringify(expenses)); }, [expenses]);
 
   const [isOnline, setIsOnline] = useState(() => typeof navigator !== 'undefined' ? navigator.onLine : true);
   const [wsConnected, setWsConnected] = useState(true);
 
-  // Sync across all phones/devices by fetching backend state
+  // FIX 6: Concurrent fetch guard — prevents overlapping polling requests from racing
+  const isFetchingRef = useRef(false);
+
+  // FIX 3: fetchFromBackend ALWAYS replaces invoice state with authoritative DB state.
+  // It NEVER merges local-only invoices. Database wins unconditionally.
   const fetchFromBackend = useCallback(async () => {
+    if (isFetchingRef.current) return; // skip if fetch already in flight
+    isFetchingRef.current = true;
     try {
+      // FIX 8: use tenantId from authenticated user — never hardcode 1
+      const tenantId = getAuthTenantId();
       const [prodRes, invRes, custRes] = await Promise.allSettled([
-        fetch(`${API_BASE_URL}/api/products?tenantId=1`),
-        fetch(`${API_BASE_URL}/api/invoices?tenantId=1`),
-        fetch(`${API_BASE_URL}/api/customers?tenantId=1`)
+        fetch(`${API_BASE_URL}/api/products?tenantId=${tenantId}`),
+        fetch(`${API_BASE_URL}/api/invoices?tenantId=${tenantId}`),
+        fetch(`${API_BASE_URL}/api/customers?tenantId=${tenantId}`)
       ]);
 
       const isConnected = [prodRes, invRes, custRes].some(r => r.status === 'fulfilled' && r.value.ok);
-      if (isConnected) {
-        setIsOnline(true);
-        setWsConnected(true);
-      }
+      setIsOnline(isConnected);
+      setWsConnected(isConnected);
 
       if (prodRes.status === 'fulfilled' && prodRes.value.ok) {
         const prodData = await prodRes.value.json();
@@ -271,11 +309,8 @@ export const DataProvider = ({ children }) => {
               type: inv.type || 'TAX_INVOICE'
             };
           });
-          setInvoices(prev => {
-            const backendInvNums = new Set(mapped.map(i => i.invoiceNumber));
-            const localOnly = (prev || []).filter(i => i && i.invoiceNumber && !backendInvNums.has(i.invoiceNumber));
-            return [...mapped, ...localOnly];
-          });
+          // FIX 3: Unconditionally replace state with DB state. Never merge stale local invoices.
+          setInvoices(mapped);
         }
       }
 
@@ -286,13 +321,18 @@ export const DataProvider = ({ children }) => {
         }
       }
     } catch (e) {
-      console.log('Skipping backend sync, using local state:', e.message);
+      // FIX 9: Log actual errors — never silently swallow
+      console.error('Backend sync failed:', e.message);
+      setIsOnline(false);
+      setWsConnected(false);
+    } finally {
+      isFetchingRef.current = false;
     }
   }, []);
 
   // Monitor online/offline network status
   useEffect(() => {
-    const handleOnline = () => setIsOnline(true);
+    const handleOnline = () => { setIsOnline(true); fetchFromBackend(); };
     const handleOffline = () => setIsOnline(false);
     window.addEventListener('online', handleOnline);
     window.addEventListener('offline', handleOffline);
@@ -300,9 +340,9 @@ export const DataProvider = ({ children }) => {
       window.removeEventListener('online', handleOnline);
       window.removeEventListener('offline', handleOffline);
     };
-  }, []);
+  }, [fetchFromBackend]);
 
-  // Poll backend every 3 seconds so edits from any phone sync instantly to all other phones
+  // Poll backend every 3 seconds — all devices get authoritative DB state within 3s
   useEffect(() => {
     fetchFromBackend();
     const interval = setInterval(fetchFromBackend, 3000);
@@ -345,14 +385,15 @@ export const DataProvider = ({ children }) => {
     addAuditLog('PRODUCT_CREATED', user?.username, user?.role, `Added EV part ${newProd.name}`);
 
     try {
-      await fetch(`${API_BASE_URL}/api/products?tenantId=1`, {
+      const tenantId = getAuthTenantId();
+      await fetch(`${API_BASE_URL}/api/products?tenantId=${tenantId}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(product)
       });
       fetchFromBackend();
     } catch (e) {
-      console.log('Saved product locally');
+      console.error('Product save failed:', e.message);
     }
 
     return newProd;
@@ -367,7 +408,7 @@ export const DataProvider = ({ children }) => {
       await fetch(`${API_BASE_URL}/api/products/${productId}`, { method: 'DELETE' });
       fetchFromBackend();
     } catch (e) {
-      console.log('Deleted product locally');
+      console.error('Product delete failed:', e.message);
     }
   };
 
@@ -385,7 +426,7 @@ export const DataProvider = ({ children }) => {
       await fetch(`${API_BASE_URL}/api/products/${productId}/stock?quantity=${delta}&mode=${mode}`, { method: 'PUT' });
       fetchFromBackend();
     } catch (e) {
-      console.log('Adjusted stock locally');
+      console.error('Stock adjustment failed:', e.message);
     }
   };
 
@@ -401,14 +442,21 @@ export const DataProvider = ({ children }) => {
     return 'CASH';
   };
 
+  // FIX 4, 5, 9: addInvoice — DATABASE FIRST
+  // 1. Build payload (no client-side id)
+  // 2. POST to backend
+  // 3. Await confirmed HTTP 200 with real DB id
+  // 4. Only then refresh state from DB via fetchFromBackend
+  // 5. On failure — throw so the UI shows a clear error to the user
   const addInvoice = async (invoice, user = {}) => {
-    const invNumStr = invoice.invoiceNumber || `EV-${Date.now().toString().slice(-6)}`;
-    const newInv = {
-      id: Date.now(),
-      invoiceNumber: invNumStr,
-      date: invoice.date || new Date().toISOString().split('T')[0],
-      createdBy: user?.username || 'owner',
-      createdByName: user?.fullName || 'EV Service Admin',
+    // FIX 8: use tenantId/userId from authenticated user
+    const tenantId = getAuthTenantId();
+    const uId = user?.id || getAuthUserId();
+
+    const backendPayload = {
+      // Do NOT send a client-generated ID — let the database generate it
+      invoiceNumber: invoice.invoiceNumber || null,
+      type: invoice.type || 'TAX_INVOICE',
       subtotal: Number(invoice.subtotal || invoice.grandTotal || 0),
       cgstAmount: Number(invoice.cgstAmount || 0),
       sgstAmount: Number(invoice.sgstAmount || 0),
@@ -419,80 +467,50 @@ export const DataProvider = ({ children }) => {
       balanceAmount: Number(invoice.balanceAmount || 0),
       paymentStatus: invoice.paymentStatus || 'PAID',
       paymentMethod: mapPaymentMethod(invoice.paymentMethod || invoice.paymentType),
-      type: invoice.type || 'TAX_INVOICE',
-      ...invoice
+      notes: invoice.notes || '',
+      customer: {
+        name: invoice.customerName || invoice.customer?.name || 'Walk-in Customer',
+        phone: invoice.customerPhone || invoice.customer?.phone || '',
+        address: invoice.billingAddress || invoice.customer?.address || ''
+      },
+      items: (invoice.items || []).map(item => ({
+        productName: item.productName || item.name || 'Item',
+        hsnCode: item.hsnCode || '',
+        quantity: Number(item.quantity || 1),
+        unitPrice: Number(item.unitPrice || item.pricePerUnit || 0),
+        taxRate: Number(item.taxRate || 18),
+        taxAmount: Number(item.taxAmount || 0),
+        totalPrice: Number(item.totalPrice || item.amount || 0)
+      }))
     };
 
-    setInvoices(prev => [newInv, ...prev]);
+    // POST to backend first — do NOT optimistically add to state before confirmation
+    const res = await fetch(`${API_BASE_URL}/api/invoices?tenantId=${tenantId}&userId=${uId}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(backendPayload)
+    });
 
-    if (invoice.customerName && !customers.some(c => c.name.toLowerCase() === invoice.customerName.toLowerCase())) {
-      addCustomer({
-        name: invoice.customerName,
-        phone: invoice.customerPhone || '',
-        address: invoice.billingAddress || '',
-        regNo: invoice.regNo || ''
-      });
+    // FIX 9: surface server errors — never silently swallow
+    if (!res.ok) {
+      let errMsg = `Server error ${res.status}`;
+      try { errMsg = `Invoice could not be saved to the server (${res.status}). Please try again.`; } catch (_) {}
+      throw new Error(errMsg);
     }
 
-    if (invoice.items && Array.isArray(invoice.items)) {
-      setProducts(prev => prev.map(p => {
-        const lineItem = invoice.items.find(item => item.id === p.id || item.productName === p.name);
-        if (lineItem) {
-          return { ...p, stockQuantity: Math.max(0, p.stockQuantity - Number(lineItem.quantity || 1)) };
-        }
-        return p;
-      }));
-    }
+    // FIX 5: use the real database-generated ID from the backend response
+    const savedFromBackend = await res.json();
 
-    addAuditLog('INVOICE_CREATED', user?.username || 'owner', user?.role || 'OWNER', `Created EV Invoice #${newInv.invoiceNumber} for ₹${newInv.grandTotal.toLocaleString()}`);
+    addAuditLog(
+      'INVOICE_CREATED',
+      user?.username || 'owner',
+      user?.role || 'OWNER',
+      `Created EV Invoice #${savedFromBackend.invoiceNumber} for ₹${Number(savedFromBackend.grandTotal || 0).toLocaleString()}`
+    );
 
-    try {
-      const uId = user?.id || 1;
-      const backendPayload = {
-        invoiceNumber: newInv.invoiceNumber,
-        type: newInv.type || 'TAX_INVOICE',
-        subtotal: newInv.subtotal,
-        cgstAmount: newInv.cgstAmount,
-        sgstAmount: newInv.sgstAmount,
-        igstAmount: newInv.igstAmount,
-        discountAmount: newInv.discountAmount,
-        grandTotal: newInv.grandTotal,
-        paidAmount: newInv.paidAmount,
-        balanceAmount: newInv.balanceAmount,
-        paymentStatus: newInv.paymentStatus,
-        paymentMethod: mapPaymentMethod(newInv.paymentMethod || newInv.paymentType),
-        notes: newInv.notes || '',
-        customer: {
-          name: newInv.customerName || newInv.customer?.name || 'Walk-in Customer',
-          phone: newInv.customerPhone || newInv.customer?.phone || '',
-          address: newInv.billingAddress || newInv.customer?.address || ''
-        },
-        items: (newInv.items || []).map(item => ({
-          productName: item.productName || item.name || 'Item',
-          hsnCode: item.hsnCode || '',
-          quantity: Number(item.quantity || 1),
-          unitPrice: Number(item.unitPrice || item.pricePerUnit || 0),
-          taxRate: Number(item.taxRate || 18),
-          taxAmount: Number(item.taxAmount || 0),
-          totalPrice: Number(item.totalPrice || item.amount || 0)
-        }))
-      };
-
-      const res = await fetch(`${API_BASE_URL}/api/invoices?tenantId=1&userId=${uId}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(backendPayload)
-      });
-      if (res.ok) {
-        const savedFromBackend = await res.json();
-        await fetchFromBackend();
-        return savedFromBackend;
-      }
-    } catch (e) {
-      console.log('Saved invoice locally');
-    }
-
-    return newInv;
+    // Refresh invoice list from DB — all devices get authoritative state
+    await fetchFromBackend();
+    return savedFromBackend;
   };
 
   const updateInvoice = (updatedInvoice, user = {}) => {
@@ -501,14 +519,19 @@ export const DataProvider = ({ children }) => {
     return updatedInvoice;
   };
 
+  // FIX 7: deleteInvoice — backend FIRST, then refresh from DB
   const deleteInvoice = async (invoiceId, user = {}) => {
-    setInvoices(prev => prev.filter(inv => inv.id !== invoiceId));
-    addAuditLog('INVOICE_DELETED', user?.username || 'owner', user?.role || 'OWNER', `Deleted Invoice #${invoiceId}`);
     try {
-      await fetch(`${API_BASE_URL}/api/invoices/${invoiceId}`, { method: 'DELETE' });
-      fetchFromBackend();
+      const res = await fetch(`${API_BASE_URL}/api/invoices/${invoiceId}`, { method: 'DELETE' });
+      if (!res.ok) {
+        throw new Error(`Delete failed: server returned ${res.status}`);
+      }
+      addAuditLog('INVOICE_DELETED', user?.username || 'owner', user?.role || 'OWNER', `Deleted Invoice #${invoiceId}`);
+      // Refresh from DB after confirmed delete
+      await fetchFromBackend();
     } catch (e) {
-      console.log('Deleted invoice locally');
+      console.error('Invoice delete failed:', e.message);
+      throw e;
     }
   };
 
@@ -516,14 +539,15 @@ export const DataProvider = ({ children }) => {
     const newCust = { id: Date.now(), pendingBalance: 0, ...customer };
     setCustomers(prev => [...prev, newCust]);
     try {
-      await fetch(`${API_BASE_URL}/api/customers?tenantId=1`, {
+      const tenantId = getAuthTenantId();
+      await fetch(`${API_BASE_URL}/api/customers?tenantId=${tenantId}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(newCust)
       });
       fetchFromBackend();
     } catch (e) {
-      console.log('Saved customer locally');
+      console.error('Customer save failed:', e.message);
     }
   };
 
@@ -535,7 +559,7 @@ export const DataProvider = ({ children }) => {
       await fetch(`${API_BASE_URL}/api/customers/${customerId}`, { method: 'DELETE' });
       fetchFromBackend();
     } catch (e) {
-      console.log('Deleted customer locally');
+      console.error('Customer delete failed:', e.message);
     }
   };
 

@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
-import { API_BASE_URL } from '../config';
+import { API_BASE_URL, WS_BASE_URL } from '../config';
 
 // --- Helper: read current authenticated user from localStorage ---
 const getAuthUser = () => {
@@ -354,10 +354,89 @@ export const DataProvider = ({ children }) => {
     };
   }, [fetchFromBackend]);
 
-  // Poll backend every 3 seconds — all devices get authoritative DB state within 3s
+  // Realtime WebSocket STOMP Connection to Spring Boot Backend
+  useEffect(() => {
+    let ws = null;
+    let reconnectTimeout = null;
+
+    const connectWS = () => {
+      try {
+        const wsUrl = `${WS_BASE_URL}/ws-billing-native`;
+        ws = new WebSocket(wsUrl);
+
+        ws.onopen = () => {
+          setWsConnected(true);
+          // Send STOMP CONNECT frame
+          const connectFrame = `CONNECT\naccept-version:1.1,1.2\nheart-beat:10000,10000\n\n\0`;
+          ws.send(connectFrame);
+        };
+
+        ws.onmessage = (event) => {
+          const data = typeof event.data === 'string' ? event.data : '';
+          if (data.startsWith('CONNECTED')) {
+            // Subscribe to /topic/sync-events for instant notifications
+            const subFrame = `SUBSCRIBE\nid:sub-0\ndestination:/topic/sync-events\n\n\0`;
+            ws.send(subFrame);
+          } else if (data.startsWith('MESSAGE')) {
+            // Realtime push received from server — immediately refresh all devices
+            fetchFromBackend();
+          }
+        };
+
+        ws.onerror = () => {
+          setWsConnected(false);
+        };
+
+        ws.onclose = () => {
+          setWsConnected(false);
+          reconnectTimeout = setTimeout(connectWS, 4000);
+        };
+      } catch (e) {
+        setWsConnected(false);
+        reconnectTimeout = setTimeout(connectWS, 4000);
+      }
+    };
+
+    connectWS();
+
+    return () => {
+      if (reconnectTimeout) clearTimeout(reconnectTimeout);
+      if (ws) {
+        try { ws.close(); } catch (_) {}
+      }
+    };
+  }, [fetchFromBackend]);
+
+  // Realtime Cross-Tab BroadcastChannel
+  useEffect(() => {
+    if (typeof BroadcastChannel !== 'undefined') {
+      const channel = new BroadcastChannel('erp_realtime_sync');
+      channel.onmessage = () => {
+        fetchFromBackend();
+      };
+      return () => {
+        channel.close();
+      };
+    }
+  }, [fetchFromBackend]);
+
+  // Refresh when device wakes up or tab becomes visible
+  useEffect(() => {
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible') {
+        fetchFromBackend();
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibility);
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibility);
+    };
+  }, [fetchFromBackend]);
+
+  // Fast background polling (every 2.5 seconds) as ultra-reliable fallback
   useEffect(() => {
     fetchFromBackend();
-    const interval = setInterval(fetchFromBackend, 3000);
+    const interval = setInterval(fetchFromBackend, 2500);
     const handleFocus = () => fetchFromBackend();
     window.addEventListener('focus', handleFocus);
     return () => {
@@ -519,6 +598,15 @@ export const DataProvider = ({ children }) => {
       user?.role || 'OWNER',
       `Created EV Invoice #${savedFromBackend.invoiceNumber} for ₹${Number(savedFromBackend.grandTotal || 0).toLocaleString()}`
     );
+
+    // Broadcast realtime event to other local tabs
+    if (typeof BroadcastChannel !== 'undefined') {
+      try {
+        const bc = new BroadcastChannel('erp_realtime_sync');
+        bc.postMessage('INVOICE_CREATED');
+        bc.close();
+      } catch (_) {}
+    }
 
     // Refresh invoice list from DB — all devices get authoritative state
     await fetchFromBackend();

@@ -4,6 +4,7 @@ import com.businesserp.api.config.JwtTokenProvider;
 import com.businesserp.api.dto.*;
 import com.businesserp.api.model.AuditLog;
 import com.businesserp.api.model.PasswordResetOtp;
+import com.businesserp.api.model.Role;
 import com.businesserp.api.model.User;
 import com.businesserp.api.repository.AuditLogRepository;
 import com.businesserp.api.repository.PasswordResetOtpRepository;

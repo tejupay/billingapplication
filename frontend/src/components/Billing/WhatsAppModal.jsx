@@ -22,7 +22,7 @@ export const WhatsAppModal = ({ invoice, onClose }) => {
   const [pdfGenerated, setPdfGenerated] = useState(false);
   const [activeTab, setActiveTab] = useState('DIRECT'); // 'DIRECT' | 'EMBEDDED_WEB'
 
-  // Generate robust invoice items list for WhatsApp
+  // Generate robust invoice items list & locked-amount UPI payment links for WhatsApp
   const generateMessageText = () => {
     const rawItems = invoice.items || [];
     const itemsList = rawItems.map((item, idx) => {
@@ -36,17 +36,22 @@ export const WhatsAppModal = ({ invoice, onClose }) => {
     const grandTotal = Number(invoice.grandTotal || invoice.totalAmount || 0);
     const subTotal = Number(invoice.subtotal || invoice.subTotal || grandTotal);
     const taxTotal = Number(invoice.taxTotal || invoice.taxAmount || 0);
+    const lockedAmount = grandTotal.toFixed(2);
 
     const upiId = shopDetails?.upiId || 'apexretail@hdfcbank';
-    const upiPayLink = `upi://pay?pa=${upiId}&pn=${encodeURIComponent(shopDetails?.name || 'GreenDrive EV')}&am=${grandTotal}&cu=INR&tn=${encodeURIComponent('Invoice-' + invoice.invoiceNumber)}`;
-    const qrImageUrl = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(upiPayLink)}`;
+    const shopName = shopDetails?.name || 'GreenDrive EV Motors';
+    const note = `Invoice_${invoice.invoiceNumber || 'BILL'}`;
 
-    return `🧾 *INVOICE & BILL PDF: ${invoice.invoiceNumber || 'INV-001'}*
-🏢 *${shopDetails?.name || 'GreenDrive EV Motors'}*
+    // Standard NPCI UPI Intent Deep Link: Pre-fills and locks the exact bill amount (non-editable in UPI apps)
+    const upiPayLink = `upi://pay?pa=${upiId}&pn=${encodeURIComponent(shopName)}&am=${lockedAmount}&cu=INR&tn=${encodeURIComponent(note)}`;
+    const qrImageUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(upiPayLink)}`;
+
+    return `🧾 *INVOICE & PAYMENT DETAILS: #${invoice.invoiceNumber || 'INV-001'}*
+🏢 *${shopName}*
 ----------------------------------------
 👤 *Customer:* ${invoice.customerName || 'Valued Customer'}
 📅 *Date:* ${invoice.date || new Date().toLocaleDateString('en-IN')}
-💳 *Payment Status:* ${invoice.paymentStatus || invoice.paymentMethod || 'PAID'}
+💳 *Payment Status:* ${invoice.paymentStatus || 'PENDING'}
 
 📦 *ITEMS PURCHASED:*
 ${itemsList || '  • Standard Invoice Items'}
@@ -54,15 +59,21 @@ ${itemsList || '  • Standard Invoice Items'}
 ----------------------------------------
 💵 *Subtotal:* ₹${subTotal.toLocaleString('en-IN')}
 📊 *Tax / GST:* ₹${taxTotal.toLocaleString('en-IN')}
-💰 *GRAND TOTAL:* ₹${grandTotal.toLocaleString('en-IN')}
+💰 *EXACT PAYABLE AMOUNT:* *₹${grandTotal.toLocaleString('en-IN')}*
 
-📲 *SCAN TO PAY (UPI QR CODE LINK):*
+⚡ *1-CLICK INSTANT UPI PAYMENT LINK:*
+👉 ${upiPayLink}
+
+*(Clicking the link above will open PhonePe, Google Pay, Paytm, Cred, or any UPI app on your phone with the exact locked amount of ₹${grandTotal.toLocaleString('en-IN')} prefilled. No manual amount entry needed!)*
+
+🖼️ *OR SCAN UPI QR CODE TO PAY:*
 ${qrImageUrl}
 
-🏦 *PAYMENT UPI ID:* ${upiId}
+🏦 *UPI ID:* \`${upiId}\`
+
 ℹ️ ${customNote}
 
-Thank you for your business! 🙏`;
+Thank you for your business with ${shopName}! 🙏`;
   };
 
   const formattedMsg = generateMessageText();
@@ -195,25 +206,37 @@ Thank you for your business! 🙏`;
     window.open(url, '_blank');
   };
 
+  const handleOpenWhatsAppMobile = () => {
+    const url = `https://wa.me/${cleanPhoneDigits}?text=${encodeURIComponent(formattedMsg)}`;
+    window.open(url, '_blank');
+  };
+
   const handleDownloadAndSendPdf = () => {
     const fileName = generateAndDownloadPDF();
     const grandTotal = Number(invoice.grandTotal || invoice.totalAmount || 0);
+    const lockedAmount = grandTotal.toFixed(2);
     const upiId = shopDetails?.upiId || 'apexretail@hdfcbank';
-    const upiPayLink = `upi://pay?pa=${upiId}&pn=${encodeURIComponent(shopDetails?.name || 'GreenDrive EV')}&am=${grandTotal}&cu=INR&tn=${encodeURIComponent('Invoice-' + invoice.invoiceNumber)}`;
-    const qrImageUrl = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(upiPayLink)}`;
+    const shopName = shopDetails?.name || 'GreenDrive EV Motors';
+    const note = `Invoice_${invoice.invoiceNumber || 'BILL'}`;
+    const upiPayLink = `upi://pay?pa=${upiId}&pn=${encodeURIComponent(shopName)}&am=${lockedAmount}&cu=INR&tn=${encodeURIComponent(note)}`;
+    const qrImageUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(upiPayLink)}`;
 
-    const pdfMessage = `🧾 *OFFICIAL BILL PDF DOCUMENT: ${invoice.invoiceNumber}*
-🏢 *${shopDetails?.name || 'GreenDrive EV Motors'}*
+    const pdfMessage = `🧾 *OFFICIAL BILL & INVOICE DOCUMENT: #${invoice.invoiceNumber || 'INV-001'}*
+🏢 *${shopName}*
 ----------------------------------------
 👤 *Customer:* ${invoice.customerName || 'Valued Customer'}
-💰 *Grand Total:* ₹${grandTotal.toLocaleString('en-IN')}
+💰 *LOCKED PAYABLE AMOUNT:* *₹${grandTotal.toLocaleString('en-IN')}*
+
+⚡ *1-CLICK PAYMENT LINK (PhonePe / Google Pay / Paytm / Any UPI App):*
+👉 ${upiPayLink}
+
+*(Clicking the link opens PhonePe, Google Pay, or Paytm directly with the exact non-editable bill amount of ₹${grandTotal.toLocaleString('en-IN')})*
 
 📲 *PAYMENT QR CODE LINK:*
 ${qrImageUrl}
-🏦 *UPI ID:* ${upiId}
+🏦 *UPI ID:* \`${upiId}\`
 
-📎 Your official PDF invoice file (*${fileName || 'Invoice.pdf'}*) has been generated and saved to your computer. Please attach the downloaded PDF file in this chat window!
-
+📎 Your official PDF invoice (*${fileName || 'Invoice.pdf'}*) is attached.
 Thank you for your business! 🙏`;
 
     const url = `https://web.whatsapp.com/send?phone=${cleanPhoneDigits}&text=${encodeURIComponent(pdfMessage)}`;
@@ -385,6 +408,14 @@ Thank you for your business! 🙏`;
           >
             {copied ? <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
             {copied ? 'Copied' : 'Copy Text'}
+          </button>
+
+          <button
+            onClick={handleOpenWhatsAppMobile}
+            className="px-4 py-2 bg-emerald-700 hover:bg-emerald-600 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-lg shadow-emerald-700/30 transition"
+            title="Open native WhatsApp App directly on mobile or desktop"
+          >
+            <Smartphone className="w-3.5 h-3.5" /> WhatsApp App (Mobile)
           </button>
 
           <button

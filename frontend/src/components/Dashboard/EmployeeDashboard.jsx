@@ -4,7 +4,7 @@ import { useAuth } from '../../context/AuthContext';
 import { PlusCircle, Search, Printer, Share2, ShoppingBag, Receipt, CheckCircle, ShieldOff } from 'lucide-react';
 
 export const EmployeeDashboard = ({ onOpenBilling, onSelectInvoiceForPrint }) => {
-  const { invoices, products, customers } = useData();
+  const { invoices, products, customers, shopDetails } = useData();
   const { currentUser } = useAuth();
 
   const [searchQuery, setSearchQuery] = useState('');
@@ -121,7 +121,17 @@ export const EmployeeDashboard = ({ onOpenBilling, onSelectInvoiceForPrint }) =>
                       <Printer className="w-3 h-3 text-blue-400" /> Print
                     </button>
                     <a
-                      href={`https://wa.me/?text=${encodeURIComponent(`Hello ${inv.customerName}, your invoice #${inv.invoiceNumber} of total ₹${inv.grandTotal} has been issued by Apex Retail. Thank you for your business!`)}`}
+                      href={`https://wa.me/${(inv.customerPhone || inv.phone || '').replace(/\D/g, '')}?text=${encodeURIComponent(
+                        `🧾 *INVOICE: #${inv.invoiceNumber || 'INV'}*\n` +
+                        `🏢 *${shopDetails?.name || 'GreenDrive EV Motors'}*\n` +
+                        `----------------------------------------\n` +
+                        `👤 Customer: ${inv.customerName || 'Valued Customer'}\n` +
+                        `💰 *LOCKED PAYABLE AMOUNT:* *₹${Number(inv.grandTotal || 0).toLocaleString('en-IN')}*\n\n` +
+                        `⚡ *1-CLICK PAYMENT LINK (PhonePe / Google Pay / Paytm / Any UPI App):*\n` +
+                        `upi://pay?pa=${shopDetails?.upiId || 'apexretail@hdfcbank'}&pn=${encodeURIComponent(shopDetails?.name || 'GreenDrive EV')}&am=${Number(inv.grandTotal || 0).toFixed(2)}&cu=INR&tn=${encodeURIComponent('Invoice-' + (inv.invoiceNumber || 'BILL'))}\n\n` +
+                        `*(Note: Opens your UPI app with the exact locked amount of ₹${Number(inv.grandTotal || 0).toLocaleString('en-IN')} prefilled)*\n\n` +
+                        `Thank you for your business! 🙏`
+                      )}`}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="px-2.5 py-1 bg-emerald-600/20 hover:bg-emerald-600 text-emerald-400 hover:text-white text-[10px] rounded flex items-center gap-1 transition"

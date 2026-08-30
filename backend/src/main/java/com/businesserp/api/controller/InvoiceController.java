@@ -173,15 +173,27 @@ public class InvoiceController {
 
         Invoice saved = invoiceRepo.save(invoice);
 
-        auditLogRepo.save(AuditLog.builder()
-                .action("INVOICE_CREATED")
-                .performedByUsername(user.getUsername())
-                .userRole(user.getRole().name())
-                .details("Created " + saved.getType() + " #" + saved.getInvoiceNumber() + " Total: ₹" + saved.getGrandTotal())
-                .tenant(tenant)
-                .build());
+        try {
+            String roleName = (user != null && user.getRole() != null) ? user.getRole().name() : "OWNER";
+            String username = (user != null && user.getUsername() != null) ? user.getUsername() : "owner";
+            String typeName = (saved.getType() != null) ? saved.getType().name() : "TAX_INVOICE";
+            
+            auditLogRepo.save(AuditLog.builder()
+                    .action("INVOICE_CREATED")
+                    .performedByUsername(username)
+                    .userRole(roleName)
+                    .details("Created " + typeName + " #" + saved.getInvoiceNumber() + " Total: ₹" + saved.getGrandTotal())
+                    .tenant(tenant)
+                    .build());
+        } catch (Exception e) {
+            System.err.println("Audit log save warning: " + e.getMessage());
+        }
 
-        broadcastService.broadcast("INVOICE_MUTATED", saved);
+        try {
+            broadcastService.broadcast("INVOICE_MUTATED", saved.getId());
+        } catch (Exception e) {
+            System.err.println("Broadcast warning: " + e.getMessage());
+        }
 
         return ResponseEntity.ok(saved);
     }

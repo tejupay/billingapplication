@@ -159,7 +159,42 @@ export const InvoicePrintTemplate = ({ invoice, onClose }) => {
   const upiId = shopDetails?.upiId || '8105979580-of5a-2@ybl';
   const upiPayString = `upi://pay?pa=${upiId}&pn=${encodeURIComponent(companyName)}&am=${grandTotal.toFixed(2)}&cu=INR&tn=${encodeURIComponent('Invoice_' + (invoice.invoiceNumber || 'EV01'))}`;
 
-  const termsAndConditions = invoice.termsAndConditions || shopDetails?.termsAndConditions || '1. Warranty applies as per manufacturer terms.\n2. Physical and water damage will not be covered under warranty.';
+  const generatePublicBillUrl = () => {
+    try {
+      const payload = {
+        id: invoice.id,
+        invoiceNumber: invoice.invoiceNumber || 'EV 01',
+        date: invoice.date || new Date().toLocaleDateString('en-IN'),
+        dueDate: invoice.dueDate || invoice.date,
+        customerName: invoice.customerName || invoice.customer?.name || 'Customer',
+        customerPhone: invoice.customerPhone || invoice.customer?.phone || '',
+        billingAddress: invoice.billingAddress || invoice.customer?.address || '',
+        customerGstin: invoice.customerGstin || '',
+        regNo: invoice.regNo || '',
+        stateOfSupply: invoice.stateOfSupply || 'Karnataka',
+        items: Array.isArray(invoice.items) ? invoice.items : [],
+        subtotal: Number(invoice.subtotal || invoice.grandTotal || 0),
+        grandTotal: Number(invoice.grandTotal || 0),
+        paidAmount: Number(invoice.paidAmount || 0),
+        balanceAmount: Number(invoice.balanceAmount || 0),
+        paymentStatus: invoice.paymentStatus || 'PAID',
+        paymentMethod: invoice.paymentMethod || 'ONLINE',
+        bankName: invoice.bankName || 'Canara Bank',
+        accountNo: invoice.accountNo || '120001017346',
+        ifscCode: invoice.ifscCode || 'CNRB0001199',
+        accountHolderName: invoice.accountHolderName || companyName,
+        termsAndConditions: invoice.termsAndConditions || ''
+      };
+      const jsonStr = JSON.stringify(payload);
+      const base64 = btoa(unescape(encodeURIComponent(jsonStr)));
+      const origin = window.location.origin;
+      return `${origin}/?bill=${encodeURIComponent(invoice.invoiceNumber || 'EV01')}&data=${encodeURIComponent(base64)}`;
+    } catch (e) {
+      return window.location.origin;
+    }
+  };
+
+  const publicBillLink = generatePublicBillUrl();
 
   return (
     <div className="fixed inset-0 bg-slate-950/85 backdrop-blur-md flex items-center justify-center p-2 sm:p-4 z-50 overflow-y-auto print:p-0 print:bg-white print:static print:overflow-visible">
@@ -194,12 +229,13 @@ export const InvoicePrintTemplate = ({ invoice, onClose }) => {
                 `🧾 *INVOICE: #${invoice.invoiceNumber || 'EV 01'}*\n` +
                 `🏢 *${companyName}*\n` +
                 `----------------------------------------\n` +
-                `👤 Customer: ${invoice.customerName || 'Customer'}\n` +
+                `👤 *Customer:* ${invoice.customerName || 'Customer'}\n` +
                 `💰 *TOTAL AMOUNT:* *₹${grandTotal.toLocaleString('en-IN')}*\n\n` +
+                `📄 *VIEW & DOWNLOAD OFFICIAL PDF BILL:*\n` +
+                `👉 ${publicBillLink}\n\n` +
                 `⚡ *1-CLICK UPI PAYMENT LINK:*\n` +
-                `${upiPayString}\n\n` +
+                `👉 ${upiPayString}\n\n` +
                 `🏦 UPI ID: ${upiId}\n\n` +
-                `📎 Your official PDF invoice is generated.\n` +
                 `Thank you for choosing ${companyName}! 🙏`
               )}`}
               target="_blank"

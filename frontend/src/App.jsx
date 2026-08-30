@@ -19,10 +19,39 @@ import { EmployeeManager } from './components/Employees/EmployeeManager';
 import { AuditLogsModal } from './components/Security/AuditLogsModal';
 import { CompanyModal } from './components/Settings/CompanyModal';
 import { ChangePasswordModal } from './components/Auth/ChangePasswordModal';
+import { PublicInvoiceView } from './components/Billing/PublicInvoiceView';
+
+const getPublicInvoiceFromUrl = () => {
+  try {
+    const params = new URLSearchParams(window.location.search);
+    const dataParam = params.get('data');
+    if (dataParam) {
+      const jsonStr = decodeURIComponent(escape(atob(decodeURIComponent(dataParam))));
+      return JSON.parse(jsonStr);
+    }
+  } catch (e) {
+    try {
+      const params = new URLSearchParams(window.location.search);
+      const dataParam = params.get('data');
+      if (dataParam) {
+        return JSON.parse(atob(dataParam));
+      }
+    } catch (e2) {
+      console.error('Error decoding public invoice:', e2);
+    }
+  }
+  return null;
+};
 
 const AppContent = () => {
   const { currentUser } = useAuth();
   const [activeTab, setActiveTab] = useState('dashboard');
+
+  // Check if customer accessed via public invoice link
+  const publicInvoice = getPublicInvoiceFromUrl();
+  if (publicInvoice) {
+    return <PublicInvoiceView invoice={publicInvoice} />;
+  }
 
   // Modals state
   const [showBillingModal, setShowBillingModal] = useState(false);

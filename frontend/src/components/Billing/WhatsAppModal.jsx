@@ -22,6 +22,42 @@ export const WhatsAppModal = ({ invoice, onClose }) => {
   const [pdfGenerated, setPdfGenerated] = useState(false);
   const [activeTab, setActiveTab] = useState('DIRECT'); // 'DIRECT' | 'EMBEDDED_WEB'
 
+  // Generate public digital PDF invoice link for customer
+  const generatePublicBillUrl = () => {
+    try {
+      const payload = {
+        id: invoice.id,
+        invoiceNumber: invoice.invoiceNumber || 'EV 01',
+        date: invoice.date || new Date().toLocaleDateString('en-IN'),
+        dueDate: invoice.dueDate || invoice.date,
+        customerName: invoice.customerName || invoice.customer?.name || 'Customer',
+        customerPhone: invoice.customerPhone || invoice.customer?.phone || '',
+        billingAddress: invoice.billingAddress || invoice.customer?.address || '',
+        customerGstin: invoice.customerGstin || '',
+        regNo: invoice.regNo || '',
+        stateOfSupply: invoice.stateOfSupply || 'Karnataka',
+        items: Array.isArray(invoice.items) ? invoice.items : [],
+        subtotal: Number(invoice.subtotal || invoice.grandTotal || 0),
+        grandTotal: Number(invoice.grandTotal || 0),
+        paidAmount: Number(invoice.paidAmount || 0),
+        balanceAmount: Number(invoice.balanceAmount || 0),
+        paymentStatus: invoice.paymentStatus || 'PAID',
+        paymentMethod: invoice.paymentMethod || 'ONLINE',
+        bankName: invoice.bankName || 'Canara Bank',
+        accountNo: invoice.accountNo || '120001017346',
+        ifscCode: invoice.ifscCode || 'CNRB0001199',
+        accountHolderName: invoice.accountHolderName || 'YASHAS EV SERVICE',
+        termsAndConditions: invoice.termsAndConditions || ''
+      };
+      const jsonStr = JSON.stringify(payload);
+      const base64 = btoa(unescape(encodeURIComponent(jsonStr)));
+      const origin = window.location.origin;
+      return `${origin}/?bill=${encodeURIComponent(invoice.invoiceNumber || 'EV01')}&data=${encodeURIComponent(base64)}`;
+    } catch (e) {
+      return window.location.origin;
+    }
+  };
+
   // Generate robust invoice items list & locked-amount UPI payment links for WhatsApp
   const generateMessageText = () => {
     const rawItems = invoice.items || [];
@@ -38,15 +74,13 @@ export const WhatsAppModal = ({ invoice, onClose }) => {
     const taxTotal = Number(invoice.taxTotal || invoice.taxAmount || 0);
     const lockedAmount = grandTotal.toFixed(2);
 
-    // Read actual customer name — never fall back to 'Valued Customer' if a name was provided
     const custName = invoice.customerName || invoice.customer?.name || 'Customer';
-
     const upiId = shopDetails?.upiId || '8105979580-of5a-2@ybl';
     const shopName = shopDetails?.name || 'Yashas EV Service';
     const note = `Invoice_${invoice.invoiceNumber || 'BILL'}`;
 
-    // Standard NPCI UPI Intent Deep Link — pre-fills and locks exact bill amount (non-editable in UPI apps)
     const upiPayLink = `upi://pay?pa=${upiId}&pn=${encodeURIComponent(shopName)}&am=${lockedAmount}&cu=INR&tn=${encodeURIComponent(note)}`;
+    const publicBillUrl = generatePublicBillUrl();
 
     return `🧾 *INVOICE: #${invoice.invoiceNumber || 'EV 01'}*
 🏢 *${shopName}*
@@ -63,14 +97,16 @@ ${itemsList || '  • Standard Invoice Items'}
 📊 *Tax / GST:* ₹${taxTotal.toLocaleString('en-IN')}
 💰 *TOTAL AMOUNT PAYABLE:* *₹${grandTotal.toLocaleString('en-IN')}*
 
+📄 *VIEW & DOWNLOAD OFFICIAL PDF BILL:*
+👉 ${publicBillUrl}
+_(Tap the link above to view, print, or download your official PDF invoice on your phone)_
+
 ⚡ *PAY NOW — 1-Click UPI Link (PhonePe / Google Pay / Paytm / Any UPI App):*
 👉 ${upiPayLink}
 
-_(Tap the link above to open your UPI app. The exact amount ₹${grandTotal.toLocaleString('en-IN')} is already filled in — just confirm and pay. No manual entry needed.)_
-
 🏦 *UPI ID:* \`${upiId}\`
 
-Thank you for shopping with us! 🙏`;
+Thank you for choosing ${shopName}! 🙏`;
   };
 
   const formattedMsg = generateMessageText();
@@ -470,21 +506,23 @@ Thank you for shopping with us! 🙏`;
     const upiPayLink = `upi://pay?pa=${upiId}&pn=${encodeURIComponent(shopName)}&am=${lockedAmount}&cu=INR&tn=${encodeURIComponent(note)}`;
     const custName = invoice.customerName || invoice.customer?.name || 'Customer';
 
+    const publicBillUrl = generatePublicBillUrl();
     const pdfMessage = `🧾 *OFFICIAL BILL: #${invoice.invoiceNumber || 'EV 01'}*
 🏢 *${shopName}*
 ----------------------------------------
 👤 *Customer:* ${custName}
-💰 *AMOUNT PAYABLE:* *₹${grandTotal.toLocaleString('en-IN')}*
+💰 *TOTAL AMOUNT:* *₹${grandTotal.toLocaleString('en-IN')}*
+
+📄 *VIEW & DOWNLOAD OFFICIAL PDF BILL:*
+👉 ${publicBillUrl}
+_(Tap to view, print, or download your official PDF invoice on your phone)_
 
 ⚡ *PAY NOW — 1-Click UPI Link (PhonePe / Google Pay / Paytm / Any UPI):*
 👉 ${upiPayLink}
 
-_(Tap the link — the exact amount ₹${grandTotal.toLocaleString('en-IN')} is already filled in, just confirm and pay.)_
-
 🏦 UPI ID: \`${upiId}\`
 
-📎 Your PDF invoice (*${fileName || 'Invoice.pdf'}*) is also attached.
-Thank you! 🙏`;
+Thank you for choosing ${shopName}! 🙏`;
 
     const url = `https://web.whatsapp.com/send?phone=${cleanPhoneDigits}&text=${encodeURIComponent(pdfMessage)}`;
     window.open(url, '_blank');

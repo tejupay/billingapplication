@@ -231,8 +231,9 @@ export const InvoicePrintTemplate = ({ invoice, onClose }) => {
                 `----------------------------------------\n` +
                 `👤 *Customer:* ${invoice.customerName || 'Customer'}\n` +
                 `💰 *TOTAL AMOUNT:* *₹${grandTotal.toLocaleString('en-IN')}*\n\n` +
-                `📄 *VIEW & DOWNLOAD OFFICIAL PDF BILL:*\n` +
-                `👉 ${publicBillLink}\n\n` +
+                `📥 *OFFICIAL PDF INVOICE DOWNLOAD LINK:*\n` +
+                `👉 ${publicBillLink}\n` +
+                `_(Direct PDF Link — opens and downloads your official PDF invoice directly to your phone)_\n\n` +
                 `⚡ *1-CLICK UPI PAYMENT LINK:*\n` +
                 `👉 ${upiPayString}\n\n` +
                 `🏦 UPI ID: ${upiId}\n\n` +

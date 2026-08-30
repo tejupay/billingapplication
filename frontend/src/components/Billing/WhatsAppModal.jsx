@@ -97,9 +97,9 @@ ${itemsList || '  • Standard Invoice Items'}
 📊 *Tax / GST:* ₹${taxTotal.toLocaleString('en-IN')}
 💰 *TOTAL AMOUNT PAYABLE:* *₹${grandTotal.toLocaleString('en-IN')}*
 
-📄 *VIEW & DOWNLOAD OFFICIAL PDF BILL:*
+📥 *OFFICIAL PDF INVOICE DOWNLOAD LINK:*
 👉 ${publicBillUrl}
-_(Tap the link above to view, print, or download your official PDF invoice on your phone)_
+_(Direct PDF Link — opens and downloads your official PDF invoice directly to your phone)_
 
 ⚡ *PAY NOW — 1-Click UPI Link (PhonePe / Google Pay / Paytm / Any UPI App):*
 👉 ${upiPayLink}

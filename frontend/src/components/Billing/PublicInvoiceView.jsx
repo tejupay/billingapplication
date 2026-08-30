@@ -166,6 +166,14 @@ export const PublicInvoiceView = ({ invoice }) => {
     }
   };
 
+  React.useEffect(() => {
+    // Automatically trigger official PDF invoice download upon opening the link
+    const timer = setTimeout(() => {
+      handleDownloadPDF();
+    }, 500);
+    return () => clearTimeout(timer);
+  }, []);
+
   const handlePrint = () => {
     window.print();
   };

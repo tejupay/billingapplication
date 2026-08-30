@@ -1,7 +1,9 @@
-import React, { useEffect, useRef } from 'react';
-import { X, Printer, Download, Share2, Zap } from 'lucide-react';
+import React, { useEffect, useRef, useState } from 'react';
+import { X, Printer, Download, Share2, Zap, Loader2 } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
 import { useData } from '../../context/DataContext';
+import html2canvas from 'html2canvas';
+import jsPDF from 'jspdf';
 
 // Indian numbering amount in words converter
 const convertNumberToWords = (amount) => {
@@ -45,11 +47,38 @@ const convertNumberToWords = (amount) => {
 
 export const InvoicePrintTemplate = ({ invoice, onClose }) => {
   const { shopDetails } = useData();
+  const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
+  const invoiceRef = useRef(null);
 
   if (!invoice || typeof invoice.then === 'function') return null;
 
   const handlePrint = () => {
     window.print();
+  };
+
+  const handleDownloadPDF = async () => {
+    if (!invoiceRef.current) return;
+    setIsGeneratingPdf(true);
+    try {
+      const element = invoiceRef.current;
+      const canvas = await html2canvas(element, {
+        scale: 2.5,
+        useCORS: true,
+        logging: false,
+        backgroundColor: '#ffffff'
+      });
+      const imgData = canvas.toDataURL('image/png');
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+      pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, Math.min(pdfHeight, 297));
+      const safeInvNo = String(invoice.invoiceNumber || 'EV01').replace(/[^a-zA-Z0-9_-]/g, '_');
+      pdf.save(`Invoice_${safeInvNo}.pdf`);
+    } catch (e) {
+      console.error('Error generating PDF:', e);
+    } finally {
+      setIsGeneratingPdf(false);
+    }
   };
 
   // Company Details (Yashas EV Service)
@@ -148,9 +177,17 @@ export const InvoicePrintTemplate = ({ invoice, onClose }) => {
           <div className="flex items-center gap-2">
             <button
               onClick={handlePrint}
-              className="px-4 py-2 bg-black hover:bg-slate-800 text-white border border-slate-700 rounded-xl text-xs font-bold flex items-center gap-2 shadow-lg transition"
+              className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white border border-slate-700 rounded-xl text-xs font-bold flex items-center gap-2 shadow-lg transition"
             >
               <Printer className="w-4 h-4 text-emerald-400" /> Print A4 Invoice
+            </button>
+            <button
+              onClick={handleDownloadPDF}
+              disabled={isGeneratingPdf}
+              className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-bold flex items-center gap-2 shadow-lg shadow-blue-600/30 transition disabled:opacity-50"
+            >
+              {isGeneratingPdf ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
+              Download PDF
             </button>
             <a
               href={`https://wa.me/${(invoice.customerPhone || invoice.phone || '').replace(/\D/g, '')}?text=${encodeURIComponent(
@@ -184,6 +221,7 @@ export const InvoicePrintTemplate = ({ invoice, onClose }) => {
         <div className="overflow-y-auto p-4 sm:p-8 bg-slate-200/70 print:p-0 print:bg-white print:overflow-visible flex justify-center">
           <div 
             id="printable-invoice" 
+            ref={invoiceRef}
             className="w-full max-w-[210mm] bg-white text-slate-900 shadow-xl print:shadow-none p-8 sm:p-12 border border-slate-300 print:border-none font-sans text-xs leading-normal"
             style={{ minHeight: '297mm' }}
           >

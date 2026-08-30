@@ -49,18 +49,18 @@ const mapPaymentMethod = (method) => {
 const DataContext = createContext();
 
 export const INITIAL_COMPANY_DETAILS = {
-  name: 'Yashas Ev Service',
-  tagline: 'Electric Two-Wheeler Sales, Battery & Multi-Brand Service Station',
-  phone: '767642061',
-  altPhone: '6364687779',
+  name: 'YASHAS EV SERVICE',
+  tagline: 'EV SERVICE & BILLING',
+  phone: '7676424061',
+  altPhone: '8792383779',
   email: 'yrtmotos@gmail.com',
   gstin: '29EVHUB1234F1Z5',
-  address: 'No. 42, EV Hub Road, Near Bus Terminal, Bengaluru, Karnataka - 560001',
+  address: '1/9 A.M Complex, Next To Just Bake, Opp to C.B Kallu Metro Station, Bangalore - 560073',
   upiId: '8105979580-of5a-2@ybl',
-  bankName: 'HDFC Bank',
-  accountNo: '50200088991122',
-  ifscCode: 'HDFC0001234',
-  termsAndConditions: 'Warranty applies as per manufacturer terms. Thank you for choosing Yashas EV Service!'
+  bankName: 'Canara Bank',
+  accountNo: '120001017346',
+  ifscCode: 'CNRB0001199',
+  termsAndConditions: 'Warranty applies as per manufacturer terms. Physical and water damage are not covered under warranty. Thank you for choosing Yashas EV Service!'
 };
 
 const INITIAL_PRODUCTS = [

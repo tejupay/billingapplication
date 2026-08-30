@@ -112,10 +112,10 @@ Thank you for choosing ${shopName}! 🙏`;
       };
 
       // ── Resolve data ──────────────────────────────────────────
-      const shopName     = shopDetails?.name || 'Yashas EV Service';
-      const shopAddr     = shopDetails?.address || 'Bengaluru, Karnataka - 560001';
-      const shopPhone    = shopDetails?.phone || '';
-      const shopAlt      = shopDetails?.altPhone || '';
+      const shopName     = shopDetails?.name || 'YASHAS EV SERVICE';
+      const shopAddr     = shopDetails?.address || '1/9 A.M Complex, Next To Just Bake, Opp to C.B Kallu Metro Station, Bangalore - 560073';
+      const shopPhone    = shopDetails?.phone || '7676424061';
+      const shopAlt      = shopDetails?.altPhone || '8792383779';
       const shopEmail    = shopDetails?.email || '';
       const shopGstin    = shopDetails?.gstin || '';
       const invNo        = invoice.invoiceNumber || 'EV 01';

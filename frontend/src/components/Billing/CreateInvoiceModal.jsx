@@ -50,7 +50,13 @@ export const CreateInvoiceModal = ({ isOpen, onClose, onPrintInvoice, editingInv
   const [termsText, setTermsText] = useState(shopDetails?.termsAndConditions || 'Warranty applies as per manufacturer terms. Thank you!');
   const [paymentType, setPaymentType] = useState('ONLINE'); // ONLINE, UPI, ACCOUNT_TRANSFER, CASH, CHEQUE, CREDIT
   const [referenceNo, setReferenceNo] = useState('');
-  
+
+  // Bank Details State (pre-filled from shop settings, editable per invoice)
+  const [bankName, setBankName] = useState(shopDetails?.bankName || '');
+  const [accountNo, setAccountNo] = useState(shopDetails?.accountNo || '');
+  const [ifscCode, setIfscCode] = useState(shopDetails?.ifscCode || '');
+  const [accountHolderName, setAccountHolderName] = useState(shopDetails?.name || '');
+
   // Amounts State
   const [roundOff, setRoundOff] = useState(false);
   const [receivedAmount, setReceivedAmount] = useState('');
@@ -283,6 +289,10 @@ export const CreateInvoiceModal = ({ isOpen, onClose, onPrintInvoice, editingInv
       paymentStatus: balanceDue === 0 ? 'PAID' : finalReceived > 0 ? 'PARTIAL' : 'UNPAID',
       paymentMethod: paymentType,
       referenceNo,
+      bankName,
+      accountNo,
+      ifscCode,
+      accountHolderName,
       termsAndConditions: termsText
     };
 
@@ -696,6 +706,55 @@ export const CreateInvoiceModal = ({ isOpen, onClose, onPrintInvoice, editingInv
                   className="w-full bg-slate-900 border border-slate-700 rounded px-3 py-1.5 text-slate-300 text-xs"
                   placeholder="Warranty terms..."
                 ></textarea>
+              </div>
+            </div>
+
+            {/* Bank Details */}
+            <div className="lg:col-span-4 bg-slate-950/60 p-4 border border-slate-800 rounded-xl space-y-2">
+              <h3 className="font-bold text-white text-xs flex items-center gap-1.5">
+                <Building2 className="w-4 h-4 text-blue-400" /> Bank Details
+              </h3>
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <label className="block text-slate-400 text-[11px] mb-1">Bank Name</label>
+                  <input
+                    type="text"
+                    value={bankName}
+                    onChange={(e) => setBankName(e.target.value)}
+                    className="w-full bg-slate-900 border border-slate-700 rounded px-2 py-1 text-white text-xs"
+                    placeholder="e.g. Canara Bank"
+                  />
+                </div>
+                <div>
+                  <label className="block text-slate-400 text-[11px] mb-1">Account No.</label>
+                  <input
+                    type="text"
+                    value={accountNo}
+                    onChange={(e) => setAccountNo(e.target.value)}
+                    className="w-full bg-slate-900 border border-slate-700 rounded px-2 py-1 text-white font-mono text-xs"
+                    placeholder="e.g. 120001017346"
+                  />
+                </div>
+                <div>
+                  <label className="block text-slate-400 text-[11px] mb-1">IFSC Code</label>
+                  <input
+                    type="text"
+                    value={ifscCode}
+                    onChange={(e) => setIfscCode(e.target.value.toUpperCase())}
+                    className="w-full bg-slate-900 border border-slate-700 rounded px-2 py-1 text-white font-mono text-xs uppercase"
+                    placeholder="e.g. CNRB0001199"
+                  />
+                </div>
+                <div>
+                  <label className="block text-slate-400 text-[11px] mb-1">Account Holder Name</label>
+                  <input
+                    type="text"
+                    value={accountHolderName}
+                    onChange={(e) => setAccountHolderName(e.target.value)}
+                    className="w-full bg-slate-900 border border-slate-700 rounded px-2 py-1 text-white text-xs"
+                    placeholder="e.g. YRT Motors"
+                  />
+                </div>
               </div>
             </div>
 

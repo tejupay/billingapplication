@@ -52,25 +52,25 @@ public class BusinessErpApplication {
             if (tenantRepo.count() == 0) {
                 // 1. Seed Tenant
                 Tenant tenant = Tenant.builder()
-                        .name("GreenDrive EV Motors")
-                        .gstin("29ABCDE1234F1ZH")
-                        .phone("+91 9876543210")
-                        .email("contact@greendriveev.com")
-                        .address("100 MG Road, Indiranagar, Bengaluru, Karnataka - 560038")
-                        .bankName("HDFC Bank")
-                        .accountNumber("50100234567890")
-                        .ifscCode("HDFC0000123")
-                        .upiId("apexretail@hdfcbank")
+                        .name("Yashas EV Service")
+                        .gstin("29EVHUB1234F1Z5")
+                        .phone("+91 767642061")
+                        .email("yrtmotos@gmail.com")
+                        .address("No. 42, EV Hub Road, Near Bus Terminal, Bengaluru, Karnataka - 560001")
+                        .bankName("Canara Bank")
+                        .accountNumber("120001017346")
+                        .ifscCode("CNRB0001199")
+                        .upiId("8105979580-of5a-2@ybl")
                         .build();
                 tenant = tenantRepo.save(tenant);
 
                 // 2. Seed Primary Owner & Admin Accounts
                 User admin = User.builder()
                         .username("admin")
-                        .email("admin@greendriveev.com")
+                        .email("admin@yashasev.com")
                         .password(encoder.encode("admin123"))
                         .fullName("System Administrator (Owner)")
-                        .phone("+91 9876543210")
+                        .phone("+91 767642061")
                         .role(Role.OWNER)
                         .tenant(tenant)
                         .active(true)
@@ -216,15 +216,15 @@ public class BusinessErpApplication {
 
             // Ensure default owner accounts exist and are active
             Tenant primaryTenant = tenantRepo.findAll().stream().findFirst().orElseGet(() -> tenantRepo.save(Tenant.builder()
-                    .name("GreenDrive EV Motors")
-                    .gstin("29ABCDE1234F1ZH")
-                    .phone("+91 9876543210")
-                    .email("contact@greendriveev.com")
-                    .address("100 MG Road, Indiranagar, Bengaluru, Karnataka - 560038")
-                    .bankName("HDFC Bank")
-                    .accountNumber("50100234567890")
-                    .ifscCode("HDFC0000123")
-                    .upiId("greendriveev@paytm")
+                    .name("Yashas EV Service")
+                    .gstin("29EVHUB1234F1Z5")
+                    .phone("+91 767642061")
+                    .email("yrtmotos@gmail.com")
+                    .address("No. 42, EV Hub Road, Near Bus Terminal, Bengaluru, Karnataka - 560001")
+                    .bankName("Canara Bank")
+                    .accountNumber("120001017346")
+                    .ifscCode("CNRB0001199")
+                    .upiId("8105979580-of5a-2@ybl")
                     .build()));
 
             String[][] defaultAccounts = {

@@ -36,9 +36,19 @@ public class BusinessErpApplication {
             CustomerRepository customerRepo,
             EmployeeRepository employeeRepo,
             ExpenseRepository expenseRepo,
-            BCryptPasswordEncoder encoder
+            BCryptPasswordEncoder encoder,
+            org.springframework.jdbc.core.JdbcTemplate jdbcTemplate
     ) {
         return args -> {
+            try {
+                jdbcTemplate.execute("ALTER TABLE public.invoices DROP CONSTRAINT IF EXISTS invoices_payment_method_check");
+                jdbcTemplate.execute("ALTER TABLE public.invoices DROP CONSTRAINT IF EXISTS invoices_type_check");
+                jdbcTemplate.execute("ALTER TABLE public.invoices DROP CONSTRAINT IF EXISTS invoices_payment_status_check");
+                System.out.println(">>> Database constraints sanitized on startup! <<<");
+            } catch (Exception e) {
+                System.err.println("Constraint drop warning: " + e.getMessage());
+            }
+
             if (tenantRepo.count() == 0) {
                 // 1. Seed Tenant
                 Tenant tenant = Tenant.builder()

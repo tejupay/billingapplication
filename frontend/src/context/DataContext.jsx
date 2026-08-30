@@ -37,11 +37,12 @@ const getAuthHeaders = () => {
 // --- Payment method normalizer ---
 const mapPaymentMethod = (method) => {
   if (!method) return 'CASH';
-  const m = String(method).toUpperCase();
-  if (['CASH', 'UPI', 'CARD', 'NET_BANKING', 'CREDIT', 'ONLINE', 'ACCOUNT_TRANSFER'].includes(m)) return m;
-  if (m.includes('UPI') || m.includes('ONLINE')) return 'UPI';
-  if (m.includes('CARD')) return 'CARD';
-  if (m.includes('BANK') || m.includes('TRANSFER')) return 'NET_BANKING';
+  const m = String(method).toUpperCase().trim();
+  if (['CASH', 'UPI', 'CARD', 'NET_BANKING', 'CREDIT'].includes(m)) return m;
+  if (m.includes('UPI') || m.includes('ONLINE') || m.includes('QR')) return 'UPI';
+  if (m.includes('CARD') || m.includes('POS')) return 'CARD';
+  if (m.includes('BANK') || m.includes('TRANSFER') || m.includes('NET')) return 'NET_BANKING';
+  if (m.includes('CREDIT')) return 'CREDIT';
   return 'CASH';
 };
 

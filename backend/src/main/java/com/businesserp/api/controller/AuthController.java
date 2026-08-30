@@ -33,8 +33,9 @@ public class AuthController {
 
     @PostMapping("/login")
     public ResponseEntity<?> login(@Valid @RequestBody LoginRequest request) {
-        User user = userRepo.findByUsername(request.getUsername())
-                .orElseGet(() -> userRepo.findByEmail(request.getUsername()).orElse(null));
+        String input = request.getUsername() != null ? request.getUsername().trim() : "";
+        User user = userRepo.findByUsernameIgnoreCase(input)
+                .orElseGet(() -> userRepo.findByEmailIgnoreCase(input).orElse(null));
 
         if (user == null) {
             return ResponseEntity.badRequest().body(Map.of("message", "Invalid username/email or password"));

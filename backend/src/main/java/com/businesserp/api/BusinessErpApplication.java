@@ -204,7 +204,62 @@ public class BusinessErpApplication {
                 System.out.println(" - OWNER (Admin) : admin / admin123");
             }
 
-            // Ensure all user accounts in database are active with valid BCrypt hashed passwords
+            // Ensure default owner accounts exist and are active
+            Tenant primaryTenant = tenantRepo.findAll().stream().findFirst().orElseGet(() -> tenantRepo.save(Tenant.builder()
+                    .name("GreenDrive EV Motors")
+                    .gstin("29ABCDE1234F1ZH")
+                    .phone("+91 9876543210")
+                    .email("contact@greendriveev.com")
+                    .address("100 MG Road, Indiranagar, Bengaluru, Karnataka - 560038")
+                    .bankName("HDFC Bank")
+                    .accountNumber("50100234567890")
+                    .ifscCode("HDFC0000123")
+                    .upiId("greendriveev@paytm")
+                    .build()));
+
+            String[][] defaultAccounts = {
+                    {"owner", "tejupay@gmail.com", "123456789", "Tejas Y (Owner)"},
+                    {"tejutejasteju7779@gmail.com", "tejutejasteju7779@gmail.com", "123456789", "Tejas Y (Owner)"},
+                    {"admin", "admin@erp.com", "admin123", "Admin"}
+            };
+
+            for (String[] acc : defaultAccounts) {
+                String uName = acc[0];
+                String uEmail = acc[1];
+                String uPass = acc[2];
+                String uFullName = acc[3];
+
+                User existing = userRepo.findByUsernameIgnoreCase(uName)
+                        .orElseGet(() -> userRepo.findByEmailIgnoreCase(uEmail).orElse(null));
+
+                if (existing == null) {
+                    userRepo.save(User.builder()
+                            .username(uName)
+                            .email(uEmail)
+                            .password(encoder.encode(uPass))
+                            .fullName(uFullName)
+                            .phone("+91 9876543210")
+                            .role(Role.OWNER)
+                            .tenant(primaryTenant)
+                            .active(true)
+                            .build());
+                } else {
+                    boolean mod = false;
+                    if (!existing.isActive()) {
+                        existing.setActive(true);
+                        mod = true;
+                    }
+                    if (existing.getPassword() == null || (!existing.getPassword().startsWith("$2a$") && !existing.getPassword().startsWith("$2b$"))) {
+                        existing.setPassword(encoder.encode(uPass));
+                        mod = true;
+                    }
+                    if (mod) {
+                        userRepo.save(existing);
+                    }
+                }
+            }
+
+            // Ensure all other user accounts in database are active with valid BCrypt hashed passwords
             List<User> allUsers = userRepo.findAll();
             for (User u : allUsers) {
                 boolean modified = false;

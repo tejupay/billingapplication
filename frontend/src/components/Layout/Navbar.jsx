@@ -1,7 +1,7 @@
 import React from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useData } from '../../context/DataContext';
-import { Shield, LogOut, PlusCircle, Building2, KeyRound } from 'lucide-react';
+import { Shield, LogOut, PlusCircle, Building2, KeyRound, Zap } from 'lucide-react';
 
 export const Navbar = ({ onOpenBilling, onOpenAudit, onOpenCompanyModal, onChangePassword }) => {
   const { currentUser, logout } = useAuth();

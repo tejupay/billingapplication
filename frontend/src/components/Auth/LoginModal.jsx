@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { API_BASE_URL } from '../../config';
-import { ShieldCheck, KeyRound, UserCheck, AlertCircle, Send, RefreshCw, Lock } from 'lucide-react';
+import { ShieldCheck, KeyRound, UserCheck, AlertCircle, Send, RefreshCw, Lock, Zap } from 'lucide-react';
 
 export const LoginModal = () => {
   const { login } = useAuth();

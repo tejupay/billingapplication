@@ -82,8 +82,13 @@ export const InvoicePrintTemplate = ({ invoice, onClose }) => {
     }
     totalDiscount += discountAmt;
 
-    const taxableVal = Math.max(0, (rate * qty) - discountAmt);
-    const taxRate = Number(item.taxRate || (item.taxType === '18%' ? 18 : item.taxType === '12%' ? 12 : item.taxType === '5%' ? 5 : 18));
+    let taxRate = 0;
+    if (item.taxRate !== undefined && item.taxRate !== null && item.taxRate !== '') {
+      taxRate = Number(item.taxRate) || 0;
+    } else if (item.taxType && item.taxType !== 'NONE') {
+      taxRate = parseFloat(item.taxType) || 0;
+    }
+
     const halfTaxRate = taxRate / 2;
     const cgstAmt = isInterState ? 0 : (taxableVal * (halfTaxRate / 100));
     const sgstAmt = isInterState ? 0 : (taxableVal * (halfTaxRate / 100));
@@ -97,7 +102,7 @@ export const InvoicePrintTemplate = ({ invoice, onClose }) => {
     return {
       sNo: idx + 1,
       name,
-      hsnCode: item.hsnCode || '02',
+      hsnCode: item.hsnCode || '—',
       qty,
       taxRate,
       halfTaxRate,

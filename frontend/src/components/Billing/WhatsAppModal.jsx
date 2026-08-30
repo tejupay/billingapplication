@@ -138,7 +138,6 @@ Thank you for shopping with us! 🙏`;
       const iAccHolder  = invoice.accountHolderName || companyName;
       const iUpiId      = shopDetails?.upiId || '8105979580-of5a-2@ybl';
 
-      // Calculations
       let calculatedSubtotal = 0;
       let calculatedTax = 0;
       let totalDiscount = 0;
@@ -157,7 +156,14 @@ Thank you for shopping with us! 🙏`;
         totalDiscount += discountAmt;
 
         const taxableVal = Math.max(0, (rate * qty) - discountAmt);
-        const taxRate = Number(item.taxRate || (item.taxType === '18%' ? 18 : item.taxType === '12%' ? 12 : item.taxType === '5%' ? 5 : 18));
+        
+        let taxRate = 0;
+        if (item.taxRate !== undefined && item.taxRate !== null && item.taxRate !== '') {
+          taxRate = Number(item.taxRate) || 0;
+        } else if (item.taxType && item.taxType !== 'NONE') {
+          taxRate = parseFloat(item.taxType) || 0;
+        }
+
         const halfTaxRate = taxRate / 2;
         const cgstAmt = isInterState ? 0 : (taxableVal * (halfTaxRate / 100));
         const sgstAmt = isInterState ? 0 : (taxableVal * (halfTaxRate / 100));
@@ -171,7 +177,7 @@ Thank you for shopping with us! 🙏`;
         return {
           sNo: idx + 1,
           name,
-          hsnCode: item.hsnCode || '02',
+          hsnCode: item.hsnCode || '—',
           qty,
           taxRate,
           halfTaxRate,
@@ -311,11 +317,11 @@ Thank you for shopping with us! 🙏`;
         doc.text(item.hsnCode, colX[1], rowY + 5, { align: 'center' });
         doc.text(`${item.qty}`, colX[2], rowY + 5, { align: 'center' });
         doc.text(item.taxRate ? `${item.halfTaxRate}%` : '0%', colX[3], rowY + 5, { align: 'center' });
-        doc.text(`₹ ${fmt(item.taxableVal)}`, colX[4], rowY + 5, { align: 'right' });
-        doc.text(`₹${fmt(item.sgstAmt)}`, colX[5], rowY + 5, { align: 'right' });
-        doc.text(`₹${fmt(item.cgstAmt)}`, colX[6], rowY + 5, { align: 'right' });
+        doc.text(`Rs. ${fmt(item.taxableVal)}`, colX[4], rowY + 5, { align: 'right' });
+        doc.text(`Rs. ${fmt(item.sgstAmt)}`, colX[5], rowY + 5, { align: 'right' });
+        doc.text(`Rs. ${fmt(item.cgstAmt)}`, colX[6], rowY + 5, { align: 'right' });
         setFont('bold', 7.2, BLACK);
-        doc.text(`₹ ${fmt(item.totalLineAmt)}`, colX[7], rowY + 5, { align: 'right' });
+        doc.text(`Rs. ${fmt(item.totalLineAmt)}`, colX[7], rowY + 5, { align: 'right' });
 
         doc.setDrawColor(...LTGRAY);
         doc.setLineWidth(0.2);
@@ -365,31 +371,35 @@ Thank you for shopping with us! 🙏`;
 
       setFont('normal', 8, MDGRAY);
       doc.text('Sub Total', totX, botY);
-      doc.text(`₹${fmt(calculatedSubtotal)}`, totValX, botY, { align: 'right' });
+      doc.text(`Rs. ${fmt(calculatedSubtotal)}`, totValX, botY, { align: 'right' });
 
       let curTotY = botY + 5;
       if (totalDiscount > 0) {
         doc.text('Discount', totX, curTotY);
-        doc.text(`- ₹${fmt(totalDiscount)}`, totValX, curTotY, { align: 'right' });
+        doc.text(`- Rs. ${fmt(totalDiscount)}`, totValX, curTotY, { align: 'right' });
         curTotY += 5;
       }
 
       doc.text('Taxable Amount', totX, curTotY);
-      doc.text(`₹${fmt(taxableTotal)}`, totValX, curTotY, { align: 'right' });
+      doc.text(`Rs. ${fmt(taxableTotal)}`, totValX, curTotY, { align: 'right' });
       curTotY += 5;
 
       if (!isInterState) {
-        doc.text('CGST', totX, curTotY);
-        doc.text(`₹${fmt(cgstTotal)}`, totValX, curTotY, { align: 'right' });
-        curTotY += 5;
+        if (cgstTotal > 0 || sgstTotal > 0) {
+          doc.text('CGST', totX, curTotY);
+          doc.text(`Rs. ${fmt(cgstTotal)}`, totValX, curTotY, { align: 'right' });
+          curTotY += 5;
 
-        doc.text('SGST', totX, curTotY);
-        doc.text(`₹${fmt(sgstTotal)}`, totValX, curTotY, { align: 'right' });
-        curTotY += 5;
+          doc.text('SGST', totX, curTotY);
+          doc.text(`Rs. ${fmt(sgstTotal)}`, totValX, curTotY, { align: 'right' });
+          curTotY += 5;
+        }
       } else {
-        doc.text('IGST', totX, curTotY);
-        doc.text(`₹${fmt(igstTotal)}`, totValX, curTotY, { align: 'right' });
-        curTotY += 5;
+        if (igstTotal > 0) {
+          doc.text('IGST', totX, curTotY);
+          doc.text(`Rs. ${fmt(igstTotal)}`, totValX, curTotY, { align: 'right' });
+          curTotY += 5;
+        }
       }
 
       doc.setDrawColor(...LTGRAY);
@@ -400,7 +410,7 @@ Thank you for shopping with us! 🙏`;
       // Large Total
       setFont('bold', 12, BLACK);
       doc.text('Total', totX, curTotY);
-      doc.text(`₹${fmt(grandTotal)}`, totValX, curTotY, { align: 'right' });
+      doc.text(`Rs. ${fmt(grandTotal)}`, totValX, curTotY, { align: 'right' });
       curTotY += 8;
 
       // Total in words
@@ -419,8 +429,9 @@ Thank you for shopping with us! 🙏`;
       setFont('normal', 7, MDGRAY);
       doc.text(`For any enquiries, email us on ${companyEmail} or call us on +91 ${companyPhone} / +91 ${companyAltPhone}`, W / 2, footerY + 1, { align: 'center' });
 
-      // Save PDF
-      const fileName = `Invoice_${invNo.replace(/\s+/g, '_')}.pdf`;
+      // Save PDF using safe clean filename
+      const safeInvNo = String(invNo || 'EV01').replace(/[^a-zA-Z0-9_-]/g, '_');
+      const fileName = `Invoice_${safeInvNo}.pdf`;
       doc.save(fileName);
       setPdfGenerated(true);
       return fileName;

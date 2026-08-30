@@ -626,10 +626,15 @@ export const DataProvider = ({ children }) => {
       body: JSON.stringify(backendPayload)
     });
 
-    // FIX 9: surface server errors — never silently swallow
+    // Surface server errors — never silently swallow
     if (!res.ok) {
-      let errMsg = `Server error ${res.status}`;
-      try { errMsg = `Invoice could not be saved to the server (${res.status}). Please try again.`; } catch (_) {}
+      let errMsg = `Invoice could not be saved to the server (${res.status}). Please try again.`;
+      try {
+        const errJson = await res.json();
+        if (errJson && errJson.message) {
+          errMsg = errJson.message;
+        }
+      } catch (_) {}
       throw new Error(errMsg);
     }
 

@@ -36,10 +36,8 @@ public class SecurityConfig {
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers(org.springframework.http.HttpMethod.OPTIONS, "/**").permitAll()
-                .requestMatchers("/api/auth/**", "/api/invoices/**", "/api/products/**", "/api/customers/**", "/api/expenses/**", "/api/employees/**", "/api/owner/users/**", "/ws-billing/**", "/ws-billing-native/**", "/v3/api-docs/**", "/swagger-ui/**").permitAll()
-                .requestMatchers("/api/owner/**").hasAuthority("OWNER")
-                .requestMatchers("/api/manager/**").hasAnyAuthority("OWNER", "MANAGER")
-                .anyRequest().authenticated()
+                .requestMatchers("/api/**", "/ws-billing/**", "/ws-billing-native/**", "/v3/api-docs/**", "/swagger-ui/**").permitAll()
+                .anyRequest().permitAll()
             )
             .headers(headers -> headers
                 .frameOptions(frame -> frame.deny())

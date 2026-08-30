@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import { API_BASE_URL, WS_BASE_URL } from '../config';
+import { supabase } from '../supabaseClient';
 
 // --- Helper: read current authenticated user from localStorage ---
 const getAuthUser = () => {
@@ -351,6 +352,49 @@ export const DataProvider = ({ children }) => {
     return () => {
       window.removeEventListener('online', handleOnline);
       window.removeEventListener('offline', handleOffline);
+    };
+  }, [fetchFromBackend]);
+
+  // Supabase Realtime Subscription on PostgreSQL database tables
+  useEffect(() => {
+    if (!supabase) return;
+
+    const channel = supabase
+      .channel('public-db-changes')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'invoices' },
+        () => {
+          fetchFromBackend();
+        }
+      )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'invoice_items' },
+        () => {
+          fetchFromBackend();
+        }
+      )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'products' },
+        () => {
+          fetchFromBackend();
+        }
+      )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'customers' },
+        () => {
+          fetchFromBackend();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      try {
+        supabase.removeChannel(channel);
+      } catch (_) {}
     };
   }, [fetchFromBackend]);
 

@@ -13,7 +13,7 @@ export const INITIAL_ACCOUNTS = [
     fullName: 'Tejas Y (Owner)',
     password: '123456789',
     role: 'OWNER',
-    tenantName: 'GreenDrive EV Motors',
+    tenantName: 'Yashas EV Service',
     active: true
   },
   {
@@ -23,7 +23,7 @@ export const INITIAL_ACCOUNTS = [
     fullName: 'Tejas Y (Owner)',
     password: '123456789',
     role: 'OWNER',
-    tenantName: 'GreenDrive EV Motors',
+    tenantName: 'Yashas EV Service',
     active: true
   }
 ];
@@ -143,7 +143,7 @@ export const AuthProvider = ({ children }) => {
                 fullName: u.fullName || u.username,
                 password: u.plainPassword || u.password || '123456789',
                 role: u.role || 'EMPLOYEE',
-                tenantName: u.tenant?.name || 'GreenDrive EV Motors',
+                tenantName: u.tenant?.name || 'Yashas EV Service',
                 active: u.active ?? true
               };
 
@@ -268,7 +268,7 @@ export const AuthProvider = ({ children }) => {
     const created = {
       id: Date.now(),
       ...newUser,
-      tenantName: currentUser?.tenantName || 'GreenDrive EV Motors',
+      tenantName: currentUser?.tenantName || 'Yashas EV Service',
       active: true
     };
 

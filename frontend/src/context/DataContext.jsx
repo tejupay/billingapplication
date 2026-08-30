@@ -60,7 +60,7 @@ export const INITIAL_COMPANY_DETAILS = {
   bankName: 'HDFC Bank',
   accountNo: '50200088991122',
   ifscCode: 'HDFC0001234',
-  termsAndConditions: 'Warranty applies as per manufacturer terms. Thank you for choosing GreenDrive EV!'
+  termsAndConditions: 'Warranty applies as per manufacturer terms. Thank you for choosing Yashas EV Service!'
 };
 
 const INITIAL_PRODUCTS = [

@@ -326,7 +326,7 @@ export const CreateInvoiceModal = ({ isOpen, onClose, onPrintInvoice, editingInv
     }
   };
 
-  const currentUpiId = shopDetails?.upiId || 'greendriveev@paytm';
+  const currentUpiId = shopDetails?.upiId || '8105979580-of5a-2@ybl';
   const upiQrString = `upi://pay?pa=${currentUpiId}&pn=${encodeURIComponent(shopDetails?.name || 'EV Motors')}&am=${grandTotal}&cu=INR&tn=Invoice_${completedInvoice?.invoiceNumber || 'EV'}`;
 
   return (
@@ -340,7 +340,7 @@ export const CreateInvoiceModal = ({ isOpen, onClose, onPrintInvoice, editingInv
               <Zap className="w-5 h-5" />
             </div>
             <div>
-              <h2 className="text-lg font-bold text-white font-heading">{shopDetails?.name || 'GreenDrive EV Motors'}</h2>
+              <h2 className="text-lg font-bold text-white font-heading">{shopDetails?.name || 'Yashas EV Service'}</h2>
               <p className="text-xs text-slate-400">EV Two-Wheeler Sales, Battery & Service Billing Terminal</p>
             </div>
           </div>

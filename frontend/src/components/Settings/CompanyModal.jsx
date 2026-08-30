@@ -125,7 +125,7 @@ export const CompanyModal = ({ isOpen, onClose }) => {
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-white font-semibold"
-                placeholder="e.g. GreenDrive EV Motors"
+                placeholder="e.g. Yashas EV Service"
                 required
               />
             </div>

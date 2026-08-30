@@ -41,8 +41,8 @@ export const WhatsAppModal = ({ invoice, onClose }) => {
     // Read actual customer name — never fall back to 'Valued Customer' if a name was provided
     const custName = invoice.customerName || invoice.customer?.name || 'Customer';
 
-    const upiId = shopDetails?.upiId || 'apexretail@hdfcbank';
-    const shopName = shopDetails?.name || 'GreenDrive EV Motors';
+    const upiId = shopDetails?.upiId || '8105979580-of5a-2@ybl';
+    const shopName = shopDetails?.name || 'Yashas EV Service';
     const note = `Invoice_${invoice.invoiceNumber || 'BILL'}`;
 
     // Standard NPCI UPI Intent Deep Link — pre-fills and locks exact bill amount (non-editable in UPI apps)
@@ -112,7 +112,7 @@ Thank you for choosing ${shopName}! 🙏`;
       };
 
       // ── Resolve data ──────────────────────────────────────────
-      const shopName     = shopDetails?.name || 'GreenDrive EV Motors';
+      const shopName     = shopDetails?.name || 'Yashas EV Service';
       const shopAddr     = shopDetails?.address || 'Bengaluru, Karnataka - 560001';
       const shopPhone    = shopDetails?.phone || '';
       const shopAlt      = shopDetails?.altPhone || '';
@@ -485,8 +485,8 @@ Thank you for choosing ${shopName}! 🙏`;
     const fileName = generateAndDownloadPDF();
     const grandTotal = Number(invoice.grandTotal || invoice.totalAmount || 0);
     const lockedAmount = grandTotal.toFixed(2);
-    const upiId = shopDetails?.upiId || 'apexretail@hdfcbank';
-    const shopName = shopDetails?.name || 'GreenDrive EV Motors';
+    const upiId = shopDetails?.upiId || '8105979580-of5a-2@ybl';
+    const shopName = shopDetails?.name || 'Yashas EV Service';
     const note = `Invoice_${invoice.invoiceNumber || 'BILL'}`;
     const upiPayLink = `upi://pay?pa=${upiId}&pn=${encodeURIComponent(shopName)}&am=${lockedAmount}&cu=INR&tn=${encodeURIComponent(note)}`;
     const custName = invoice.customerName || invoice.customer?.name || 'Customer';

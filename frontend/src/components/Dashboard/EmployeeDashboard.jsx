@@ -123,12 +123,12 @@ export const EmployeeDashboard = ({ onOpenBilling, onSelectInvoiceForPrint }) =>
                     <a
                       href={`https://wa.me/${(inv.customerPhone || inv.phone || '').replace(/\D/g, '')}?text=${encodeURIComponent(
                         `🧾 *INVOICE: #${inv.invoiceNumber || 'INV'}*\n` +
-                        `🏢 *${shopDetails?.name || 'GreenDrive EV Motors'}*\n` +
+                        `🏢 *${shopDetails?.name || 'Yashas EV Service'}*\n` +
                         `----------------------------------------\n` +
                         `👤 Customer: ${inv.customerName || 'Valued Customer'}\n` +
                         `💰 *LOCKED PAYABLE AMOUNT:* *₹${Number(inv.grandTotal || 0).toLocaleString('en-IN')}*\n\n` +
                         `⚡ *1-CLICK PAYMENT LINK (PhonePe / Google Pay / Paytm / Any UPI App):*\n` +
-                        `upi://pay?pa=${shopDetails?.upiId || 'apexretail@hdfcbank'}&pn=${encodeURIComponent(shopDetails?.name || 'GreenDrive EV')}&am=${Number(inv.grandTotal || 0).toFixed(2)}&cu=INR&tn=${encodeURIComponent('Invoice-' + (inv.invoiceNumber || 'BILL'))}\n\n` +
+                        `upi://pay?pa=${shopDetails?.upiId || '8105979580-of5a-2@ybl'}&pn=${encodeURIComponent(shopDetails?.name || 'Yashas EV Service')}&am=${Number(inv.grandTotal || 0).toFixed(2)}&cu=INR&tn=${encodeURIComponent('Invoice-' + (inv.invoiceNumber || 'BILL'))}\n\n` +
                         `*(Note: Opens your UPI app with the exact locked amount of ₹${Number(inv.grandTotal || 0).toLocaleString('en-IN')} prefilled)*\n\n` +
                         `Thank you for your business! 🙏`
                       )}`}

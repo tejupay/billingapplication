@@ -34,7 +34,7 @@ export const CreateInvoiceModal = ({ isOpen, onClose, onPrintInvoice, editingInv
   const [odoRunning, setOdoRunning] = useState('');
   const [batterySlNo, setBatterySlNo] = useState('');
   const [noOfServices, setNoOfServices] = useState('1');
-  const [invoiceNumber, setInvoiceNumber] = useState(`EV-${Date.now().toString().slice(-6)}`);
+  const [invoiceNumber, setInvoiceNumber] = useState('');
   const [invoiceDate, setInvoiceDate] = useState(new Date().toISOString().split('T')[0]);
   const [stateOfSupply, setStateOfSupply] = useState('Karnataka (29)');
 

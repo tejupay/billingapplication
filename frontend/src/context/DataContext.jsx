@@ -642,11 +642,26 @@ export const DataProvider = ({ children }) => {
     // FIX 5: use the real database-generated ID from the backend response
     const savedFromBackend = await res.json();
 
+    // Enrich response with frontend fields so WhatsApp modal and print template get the real customer name/phone
+    const enriched = {
+      ...savedFromBackend,
+      customerName: invoice.customerName || invoice.customer?.name || savedFromBackend.customer?.name || 'Walk-in Customer',
+      customerPhone: invoice.customerPhone || invoice.customer?.phone || savedFromBackend.customer?.phone || '',
+      billingAddress: invoice.billingAddress || savedFromBackend.customer?.address || '',
+      date: invoice.date || (savedFromBackend.createdAt ? savedFromBackend.createdAt.split('T')[0] : new Date().toISOString().split('T')[0]),
+      items: Array.isArray(savedFromBackend.items) && savedFromBackend.items.length > 0
+        ? savedFromBackend.items
+        : (invoice.items || []),
+      grandTotal: Number(savedFromBackend.grandTotal || invoice.grandTotal || 0),
+      paymentMethod: savedFromBackend.paymentMethod || invoice.paymentMethod || 'CASH',
+      paymentStatus: savedFromBackend.paymentStatus || invoice.paymentStatus || 'PAID'
+    };
+
     addAuditLog(
       'INVOICE_CREATED',
       user?.username || 'owner',
       user?.role || 'OWNER',
-      `Created EV Invoice #${savedFromBackend.invoiceNumber} for ₹${Number(savedFromBackend.grandTotal || 0).toLocaleString()}`
+      `Created EV Invoice #${enriched.invoiceNumber} for ₹${Number(enriched.grandTotal || 0).toLocaleString()}`
     );
 
     // Broadcast realtime event to other local tabs
@@ -660,7 +675,7 @@ export const DataProvider = ({ children }) => {
 
     // Refresh invoice list from DB — all devices get authoritative state
     await fetchFromBackend();
-    return savedFromBackend;
+    return enriched;
   };
 
   const updateInvoice = (updatedInvoice, user = {}) => {

@@ -38,42 +38,39 @@ export const WhatsAppModal = ({ invoice, onClose }) => {
     const taxTotal = Number(invoice.taxTotal || invoice.taxAmount || 0);
     const lockedAmount = grandTotal.toFixed(2);
 
+    // Read actual customer name — never fall back to 'Valued Customer' if a name was provided
+    const custName = invoice.customerName || invoice.customer?.name || 'Customer';
+
     const upiId = shopDetails?.upiId || 'apexretail@hdfcbank';
     const shopName = shopDetails?.name || 'GreenDrive EV Motors';
     const note = `Invoice_${invoice.invoiceNumber || 'BILL'}`;
 
-    // Standard NPCI UPI Intent Deep Link: Pre-fills and locks the exact bill amount (non-editable in UPI apps)
+    // Standard NPCI UPI Intent Deep Link — pre-fills and locks exact bill amount (non-editable in UPI apps)
     const upiPayLink = `upi://pay?pa=${upiId}&pn=${encodeURIComponent(shopName)}&am=${lockedAmount}&cu=INR&tn=${encodeURIComponent(note)}`;
-    const qrImageUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(upiPayLink)}`;
 
-    return `🧾 *INVOICE & PAYMENT DETAILS: #${invoice.invoiceNumber || 'INV-001'}*
+    return `🧾 *INVOICE: #${invoice.invoiceNumber || 'INV-001'}*
 🏢 *${shopName}*
-----------------------------------------
-👤 *Customer:* ${invoice.customerName || 'Valued Customer'}
+°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°
+👤 *Customer:* ${custName}
 📅 *Date:* ${invoice.date || new Date().toLocaleDateString('en-IN')}
 💳 *Payment Status:* ${invoice.paymentStatus || 'PENDING'}
 
 📦 *ITEMS PURCHASED:*
 ${itemsList || '  • Standard Invoice Items'}
 
-----------------------------------------
+°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°
 💵 *Subtotal:* ₹${subTotal.toLocaleString('en-IN')}
 📊 *Tax / GST:* ₹${taxTotal.toLocaleString('en-IN')}
-💰 *EXACT PAYABLE AMOUNT:* *₹${grandTotal.toLocaleString('en-IN')}*
+💰 *TOTAL AMOUNT PAYABLE:* *₹${grandTotal.toLocaleString('en-IN')}*
 
-⚡ *1-CLICK INSTANT UPI PAYMENT LINK:*
+⚡ *PAY NOW — 1-Click UPI Link (PhonePe / Google Pay / Paytm / Any UPI App):*
 👉 ${upiPayLink}
 
-*(Clicking the link above will open PhonePe, Google Pay, Paytm, Cred, or any UPI app on your phone with the exact locked amount of ₹${grandTotal.toLocaleString('en-IN')} prefilled. No manual amount entry needed!)*
-
-🖼️ *OR SCAN UPI QR CODE TO PAY:*
-${qrImageUrl}
+_(Tap the link above to open your UPI app. The exact amount ₹${grandTotal.toLocaleString('en-IN')} is already filled in — just confirm and pay. No manual entry needed.)_
 
 🏦 *UPI ID:* \`${upiId}\`
 
-ℹ️ ${customNote}
-
-Thank you for your business with ${shopName}! 🙏`;
+Thank you for choosing ${shopName}! 🙏`;
   };
 
   const formattedMsg = generateMessageText();
@@ -219,25 +216,23 @@ Thank you for your business with ${shopName}! 🙏`;
     const shopName = shopDetails?.name || 'GreenDrive EV Motors';
     const note = `Invoice_${invoice.invoiceNumber || 'BILL'}`;
     const upiPayLink = `upi://pay?pa=${upiId}&pn=${encodeURIComponent(shopName)}&am=${lockedAmount}&cu=INR&tn=${encodeURIComponent(note)}`;
-    const qrImageUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(upiPayLink)}`;
+    const custName = invoice.customerName || invoice.customer?.name || 'Customer';
 
-    const pdfMessage = `🧾 *OFFICIAL BILL & INVOICE DOCUMENT: #${invoice.invoiceNumber || 'INV-001'}*
+    const pdfMessage = `🧾 *OFFICIAL BILL: #${invoice.invoiceNumber || 'INV-001'}*
 🏢 *${shopName}*
 ----------------------------------------
-👤 *Customer:* ${invoice.customerName || 'Valued Customer'}
-💰 *LOCKED PAYABLE AMOUNT:* *₹${grandTotal.toLocaleString('en-IN')}*
+👤 *Customer:* ${custName}
+💰 *AMOUNT PAYABLE:* *₹${grandTotal.toLocaleString('en-IN')}*
 
-⚡ *1-CLICK PAYMENT LINK (PhonePe / Google Pay / Paytm / Any UPI App):*
+⚡ *PAY NOW — 1-Click UPI Link (PhonePe / Google Pay / Paytm / Any UPI):*
 👉 ${upiPayLink}
 
-*(Clicking the link opens PhonePe, Google Pay, or Paytm directly with the exact non-editable bill amount of ₹${grandTotal.toLocaleString('en-IN')})*
+_(Tap the link — the exact amount ₹${grandTotal.toLocaleString('en-IN')} is already filled in, just confirm and pay.)_
 
-📲 *PAYMENT QR CODE LINK:*
-${qrImageUrl}
-🏦 *UPI ID:* \`${upiId}\`
+🏦 UPI ID: \`${upiId}\`
 
-📎 Your official PDF invoice (*${fileName || 'Invoice.pdf'}*) is attached.
-Thank you for your business! 🙏`;
+📎 Your PDF invoice (*${fileName || 'Invoice.pdf'}*) is also attached.
+Thank you! 🙏`;
 
     const url = `https://web.whatsapp.com/send?phone=${cleanPhoneDigits}&text=${encodeURIComponent(pdfMessage)}`;
     window.open(url, '_blank');

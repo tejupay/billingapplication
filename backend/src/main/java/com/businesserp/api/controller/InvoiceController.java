@@ -12,7 +12,6 @@ import org.springframework.web.bind.annotation.*;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.List;
-import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/invoices")
@@ -91,7 +90,14 @@ public class InvoiceController {
             invoice.setType(InvoiceType.TAX_INVOICE);
         }
         if (invoice.getInvoiceNumber() == null || invoice.getInvoiceNumber().isEmpty() || invoiceRepo.findByInvoiceNumber(invoice.getInvoiceNumber()).isPresent()) {
-            invoice.setInvoiceNumber("INV-" + System.currentTimeMillis() / 1000 + "-" + UUID.randomUUID().toString().substring(0, 4).toUpperCase());
+            // Sequential numbering: INV-001, INV-002, INV-003...
+            long nextNum = invoiceRepo.count() + 1;
+            String candidateNumber;
+            do {
+                candidateNumber = String.format("INV-%03d", nextNum);
+                nextNum++;
+            } while (invoiceRepo.findByInvoiceNumber(candidateNumber).isPresent());
+            invoice.setInvoiceNumber(candidateNumber);
         }
 
         // Link or auto-create Customer

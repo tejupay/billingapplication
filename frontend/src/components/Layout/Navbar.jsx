@@ -18,16 +18,14 @@ export const Navbar = ({ onOpenBilling, onOpenAudit, onOpenCompanyModal, onChang
 
   return (
     <header className="bg-slate-900 border-b border-slate-800 h-16 px-6 flex items-center justify-between sticky top-0 z-30 shadow-md">
-      {/* TejuPay Brand Logo + Name + Live Sync Badge */}
+      {/* Yashas EV Service Brand Logo + Name + Live Sync Badge */}
       <div className="flex items-center gap-3">
-        <img
-          src="/tejupay-logo.svg"
-          alt="TejuPay Logo"
-          className="w-10 h-10 rounded-full shadow-lg shadow-blue-900/40"
-        />
+        <div className="w-10 h-10 bg-slate-800 border border-slate-700 rounded-xl flex items-center justify-center text-white shadow-lg font-bold">
+          <Zap className="w-5 h-5 text-emerald-400 fill-emerald-400" />
+        </div>
         <div>
           <h1 className="text-base font-bold text-white tracking-tight flex items-center gap-2">
-            <span>Teju<span className="text-blue-400">Pay</span></span>
+            <span>{shopDetails?.name || 'YASHAS EV SERVICE'}</span>
             {isOnline ? (
               <span className="text-[10px] font-mono px-2 py-0.5 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded-full flex items-center gap-1">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span> Live Sync
@@ -38,7 +36,7 @@ export const Navbar = ({ onOpenBilling, onOpenAudit, onOpenCompanyModal, onChang
               </span>
             )}
           </h1>
-          <p className="text-xs text-slate-400 font-sans">{shopDetails?.name || 'Smart Business & Billing Platform'}</p>
+          <p className="text-xs text-slate-400 font-sans">EV Service & Billing ERP</p>
         </div>
       </div>
 

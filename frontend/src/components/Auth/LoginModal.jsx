@@ -103,15 +103,13 @@ export const LoginModal = () => {
         <div className="absolute -bottom-24 -left-24 w-48 h-48 bg-indigo-600/20 rounded-full blur-3xl"></div>
 
         <div className="text-center mb-6 relative">
-          <img
-            src="/tejupay-logo.svg"
-            alt="TejuPay Logo"
-            className="w-16 h-16 mx-auto mb-3 rounded-full shadow-lg shadow-blue-900/50"
-          />
+          <div className="w-16 h-16 mx-auto mb-3 bg-slate-800 border border-slate-700 rounded-2xl flex items-center justify-center text-white shadow-xl">
+            <Zap className="w-8 h-8 text-emerald-400 fill-emerald-400" />
+          </div>
           <h2 className="text-2xl font-bold font-heading text-white">
-            Teju<span className="text-blue-400">Pay</span>
+            YASHAS <span className="text-emerald-400">EV SERVICE</span>
           </h2>
-          <p className="text-slate-400 text-xs mt-1">Smart GST Billing & Business Management Platform</p>
+          <p className="text-slate-400 text-xs mt-1">EV Two-Wheeler Sales, Battery & Service Billing ERP</p>
         </div>
 
         {error && (

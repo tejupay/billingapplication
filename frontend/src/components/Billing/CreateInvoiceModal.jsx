@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useData } from '../../context/DataContext';
 import { useAuth } from '../../context/AuthContext';
 import { 
@@ -60,11 +60,9 @@ export const CreateInvoiceModal = ({ isOpen, onClose, onPrintInvoice, editingInv
   const [invoiceDate, setInvoiceDate] = useState(new Date().toISOString().split('T')[0]);
   const [stateOfSupply, setStateOfSupply] = useState('Karnataka (29)');
 
-  // Items Table State
+  // Items Table State - Clean empty row, no pre-added dummy items
   const [items, setItems] = useState([
-    { id: 1, name: 'EV Full General Service & Battery Diagnostics', batchNo: '', modelNo: '', quantity: 1, unit: 'Nos', pricePerUnit: 850, discountType: 'NONE', discountVal: 0, taxType: 'NONE', amount: 850 },
-    { id: 2, name: 'EV Disc Brake Pad (Front/Rear)', batchNo: '', modelNo: '', quantity: 1, unit: 'Nos', pricePerUnit: 350, discountType: 'NONE', discountVal: 0, taxType: 'NONE', amount: 350 },
-    { id: 3, name: '', batchNo: '', modelNo: '', quantity: 1, unit: 'Nos', pricePerUnit: 0, discountType: 'NONE', discountVal: 0, taxType: 'NONE', amount: 0 }
+    { id: 1, name: '', batchNo: '', modelNo: '', quantity: 1, unit: 'Nos', pricePerUnit: 0, discountType: 'NONE', discountVal: 0, taxType: 'NONE', amount: 0 }
   ]);
 
   // Payment & Terms State
@@ -149,9 +147,12 @@ export const CreateInvoiceModal = ({ isOpen, onClose, onPrintInvoice, editingInv
     setNewProdPurchasePrice('');
   };
 
-  // Populate data when modal opens or when editing an existing bill
+  // Track modal open state to ONLY initialize/reset once upon opening (prevents background sync from wiping input)
+  const prevIsOpenRef = useRef(false);
+
   useEffect(() => {
     if (isOpen) {
+      const isFreshOpen = !prevIsOpenRef.current;
       if (editingInvoice) {
         setInvoiceNumber(editingInvoice.invoiceNumber || '');
         setCustomerName(editingInvoice.customerName || '');
@@ -181,10 +182,12 @@ export const CreateInvoiceModal = ({ isOpen, onClose, onPrintInvoice, editingInv
             taxType: i.taxType || 'NONE',
             amount: i.totalPrice || i.amount || 0
           }));
-          setItems(loadedItems);
+          setItems(loadedItems.length > 0 ? loadedItems : [
+            { id: 1, name: '', batchNo: '', modelNo: '', quantity: 1, unit: 'Nos', pricePerUnit: 0, discountType: 'NONE', discountVal: 0, taxType: 'NONE', amount: 0 }
+          ]);
         }
-      } else {
-        // Compute next available invoice number (fills gaps if an invoice was deleted)
+      } else if (isFreshOpen) {
+        // ONLY reset when the modal is freshly opened by user — never during background sync polling
         setInvoiceNumber(getNextInvoiceNumber(invoices));
         setCustomerName('');
         setCustomerPhone('');
@@ -199,9 +202,14 @@ export const CreateInvoiceModal = ({ isOpen, onClose, onPrintInvoice, editingInv
         setReceivedAmount('');
         setReferenceNo('');
         setErrMessage('');
+        // Start with a clean empty row — no pre-added dummy items
+        setItems([
+          { id: 1, name: '', batchNo: '', modelNo: '', quantity: 1, unit: 'Nos', pricePerUnit: 0, discountType: 'NONE', discountVal: 0, taxType: 'NONE', amount: 0 }
+        ]);
       }
     }
-  }, [isOpen, editingInvoice, invoices]);
+    prevIsOpenRef.current = isOpen;
+  }, [isOpen, editingInvoice]);
 
   if (!isOpen) return null;
 

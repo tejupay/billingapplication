@@ -52,7 +52,7 @@ export const InvoicePrintTemplate = ({ invoice, onClose }) => {
             </button>
             <a
               href={`https://wa.me/${(invoice.customerPhone || invoice.phone || '').replace(/\D/g, '')}?text=${encodeURIComponent(
-                `🧾 *INVOICE: #${invoice.invoiceNumber || 'INV-001'}*\n` +
+                `🧾 *INVOICE: #${invoice.invoiceNumber || 'EV 01'}*\n` +
                 `🏢 *${shopDetails?.name || 'Yashas EV Service'}*\n` +
                 `----------------------------------------\n` +
                 `👤 Customer: ${invoice.customerName || 'Valued Customer'}\n` +

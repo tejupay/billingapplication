@@ -48,7 +48,7 @@ export const WhatsAppModal = ({ invoice, onClose }) => {
     // Standard NPCI UPI Intent Deep Link — pre-fills and locks exact bill amount (non-editable in UPI apps)
     const upiPayLink = `upi://pay?pa=${upiId}&pn=${encodeURIComponent(shopName)}&am=${lockedAmount}&cu=INR&tn=${encodeURIComponent(note)}`;
 
-    return `🧾 *INVOICE: #${invoice.invoiceNumber || 'INV-001'}*
+    return `🧾 *INVOICE: #${invoice.invoiceNumber || 'EV 01'}*
 🏢 *${shopName}*
 °°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°
 👤 *Customer:* ${custName}
@@ -118,7 +118,7 @@ Thank you for choosing ${shopName}! 🙏`;
       const shopAlt      = shopDetails?.altPhone || '';
       const shopEmail    = shopDetails?.email || '';
       const shopGstin    = shopDetails?.gstin || '';
-      const invNo        = invoice.invoiceNumber || 'INV-001';
+      const invNo        = invoice.invoiceNumber || 'EV 01';
       const invDate      = invoice.date || new Date().toLocaleDateString('en-IN');
       const custName     = invoice.customerName || invoice.customer?.name || 'Customer';
       const custPhone    = invoice.customerPhone || invoice.customer?.phone || '';
@@ -491,7 +491,7 @@ Thank you for choosing ${shopName}! 🙏`;
     const upiPayLink = `upi://pay?pa=${upiId}&pn=${encodeURIComponent(shopName)}&am=${lockedAmount}&cu=INR&tn=${encodeURIComponent(note)}`;
     const custName = invoice.customerName || invoice.customer?.name || 'Customer';
 
-    const pdfMessage = `🧾 *OFFICIAL BILL: #${invoice.invoiceNumber || 'INV-001'}*
+    const pdfMessage = `🧾 *OFFICIAL BILL: #${invoice.invoiceNumber || 'EV 01'}*
 🏢 *${shopName}*
 ----------------------------------------
 👤 *Customer:* ${custName}

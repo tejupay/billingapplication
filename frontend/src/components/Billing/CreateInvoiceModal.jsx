@@ -20,8 +20,30 @@ import {
 import { QRCodeSVG } from 'qrcode.react';
 import { WhatsAppModal } from './WhatsAppModal';
 
+// Helper to find the lowest available positive integer starting from 1 (reuses deleted invoice numbers)
+export const getNextInvoiceNumber = (invoiceList) => {
+  const usedNumbers = new Set();
+  const pattern = /(?:EV|INV)?[- ]?0*(\d+)/i;
+  (invoiceList || []).forEach(inv => {
+    if (inv?.invoiceNumber) {
+      const match = String(inv.invoiceNumber).trim().match(pattern);
+      if (match && match[1]) {
+        const n = parseInt(match[1], 10);
+        if (!isNaN(n) && n > 0) {
+          usedNumbers.add(n);
+        }
+      }
+    }
+  });
+  let next = 1;
+  while (usedNumbers.has(next)) {
+    next++;
+  }
+  return `EV ${String(next).padStart(2, '0')}`;
+};
+
 export const CreateInvoiceModal = ({ isOpen, onClose, onPrintInvoice, editingInvoice = null }) => {
-  const { shopDetails, products, customers, addInvoice, updateInvoice, addCustomer } = useData();
+  const { shopDetails, products, customers, invoices, addInvoice, updateInvoice, addCustomer } = useData();
   const { currentUser } = useAuth();
 
   // Customer & EV Vehicle State - Clean editable fields, zero hardcoding
@@ -127,41 +149,59 @@ export const CreateInvoiceModal = ({ isOpen, onClose, onPrintInvoice, editingInv
     setNewProdPurchasePrice('');
   };
 
-  // Populate data if editing an existing bill
+  // Populate data when modal opens or when editing an existing bill
   useEffect(() => {
-    if (editingInvoice) {
-      setInvoiceNumber(editingInvoice.invoiceNumber || '');
-      setCustomerName(editingInvoice.customerName || '');
-      setCustomerPhone(editingInvoice.customerPhone || '');
-      setBillingAddress(editingInvoice.billingAddress || '');
-      setShippingAddress(editingInvoice.shippingAddress || '');
-      setRegNo(editingInvoice.regNo || '');
-      setOdoRunning(editingInvoice.odoRunning || '');
-      setBatterySlNo(editingInvoice.batterySlNo || '');
-      setNoOfServices(editingInvoice.noOfServices || '1');
-      if (editingInvoice.date) setInvoiceDate(editingInvoice.date);
-      if (editingInvoice.paymentMethod) setPaymentType(editingInvoice.paymentMethod);
-      if (editingInvoice.referenceNo) setReferenceNo(editingInvoice.referenceNo);
-      if (editingInvoice.paidAmount !== undefined) setReceivedAmount(editingInvoice.paidAmount);
+    if (isOpen) {
+      if (editingInvoice) {
+        setInvoiceNumber(editingInvoice.invoiceNumber || '');
+        setCustomerName(editingInvoice.customerName || '');
+        setCustomerPhone(editingInvoice.customerPhone || '');
+        setBillingAddress(editingInvoice.billingAddress || '');
+        setShippingAddress(editingInvoice.shippingAddress || '');
+        setRegNo(editingInvoice.regNo || '');
+        setOdoRunning(editingInvoice.odoRunning || '');
+        setBatterySlNo(editingInvoice.batterySlNo || '');
+        setNoOfServices(editingInvoice.noOfServices || '1');
+        if (editingInvoice.date) setInvoiceDate(editingInvoice.date);
+        if (editingInvoice.paymentMethod) setPaymentType(editingInvoice.paymentMethod);
+        if (editingInvoice.referenceNo) setReferenceNo(editingInvoice.referenceNo);
+        if (editingInvoice.paidAmount !== undefined) setReceivedAmount(editingInvoice.paidAmount);
 
-      if (editingInvoice.items && Array.isArray(editingInvoice.items)) {
-        const loadedItems = editingInvoice.items.map((i, idx) => ({
-          id: i.id || idx + 1,
-          name: i.productName || i.name || '',
-          batchNo: i.batchNo || '',
-          modelNo: i.modelNo || '',
-          quantity: i.quantity || 1,
-          unit: i.unit || 'Nos',
-          pricePerUnit: i.unitPrice || i.pricePerUnit || 0,
-          discountType: i.discountType || 'NONE',
-          discountVal: i.discountVal || 0,
-          taxType: i.taxType || 'NONE',
-          amount: i.totalPrice || i.amount || 0
-        }));
-        setItems(loadedItems);
+        if (editingInvoice.items && Array.isArray(editingInvoice.items)) {
+          const loadedItems = editingInvoice.items.map((i, idx) => ({
+            id: i.id || idx + 1,
+            name: i.productName || i.name || '',
+            batchNo: i.batchNo || '',
+            modelNo: i.modelNo || '',
+            quantity: i.quantity || 1,
+            unit: i.unit || 'Nos',
+            pricePerUnit: i.unitPrice || i.pricePerUnit || 0,
+            discountType: i.discountType || 'NONE',
+            discountVal: i.discountVal || 0,
+            taxType: i.taxType || 'NONE',
+            amount: i.totalPrice || i.amount || 0
+          }));
+          setItems(loadedItems);
+        }
+      } else {
+        // Compute next available invoice number (fills gaps if an invoice was deleted)
+        setInvoiceNumber(getNextInvoiceNumber(invoices));
+        setCustomerName('');
+        setCustomerPhone('');
+        setBillingAddress('');
+        setShippingAddress('');
+        setRegNo('');
+        setOdoRunning('');
+        setBatterySlNo('');
+        setNoOfServices('1');
+        setInvoiceDate(new Date().toISOString().split('T')[0]);
+        setInwardDate(new Date().toISOString().split('T')[0]);
+        setReceivedAmount('');
+        setReferenceNo('');
+        setErrMessage('');
       }
     }
-  }, [editingInvoice]);
+  }, [isOpen, editingInvoice, invoices]);
 
   if (!isOpen) return null;
 

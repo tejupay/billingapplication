@@ -11,7 +11,11 @@ import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @RestController
 @RequestMapping("/api/invoices")
@@ -89,14 +93,32 @@ public class InvoiceController {
         if (invoice.getType() == null) {
             invoice.setType(InvoiceType.TAX_INVOICE);
         }
-        if (invoice.getInvoiceNumber() == null || invoice.getInvoiceNumber().isEmpty() || invoiceRepo.findByInvoiceNumber(invoice.getInvoiceNumber()).isPresent()) {
-            // Sequential numbering: INV-001, INV-002, INV-003...
-            long nextNum = invoiceRepo.count() + 1;
-            String candidateNumber;
-            do {
-                candidateNumber = String.format("INV-%03d", nextNum);
+        if (invoice.getInvoiceNumber() == null || invoice.getInvoiceNumber().isBlank() || invoiceRepo.findByInvoiceNumber(invoice.getInvoiceNumber()).isPresent()) {
+            // Find lowest available positive number starting from 1 (fills gaps if an invoice was deleted)
+            List<Invoice> allInvoices = invoiceRepo.findByTenantIdOrderByCreatedAtDesc(tId);
+            Set<Long> usedNumbers = new HashSet<>();
+            Pattern numPattern = Pattern.compile("(?i)(?:EV|INV)?[- ]?0*(\\d+)");
+            for (Invoice inv : allInvoices) {
+                if (inv.getInvoiceNumber() != null) {
+                    Matcher m = numPattern.matcher(inv.getInvoiceNumber().trim());
+                    if (m.find()) {
+                        try {
+                            usedNumbers.add(Long.parseLong(m.group(1)));
+                        } catch (NumberFormatException ignored) {}
+                    }
+                }
+            }
+
+            long nextNum = 1;
+            while (usedNumbers.contains(nextNum)) {
                 nextNum++;
-            } while (invoiceRepo.findByInvoiceNumber(candidateNumber).isPresent());
+            }
+
+            String candidateNumber = String.format("EV %02d", nextNum);
+            while (invoiceRepo.findByInvoiceNumber(candidateNumber).isPresent()) {
+                nextNum++;
+                candidateNumber = String.format("EV %02d", nextNum);
+            }
             invoice.setInvoiceNumber(candidateNumber);
         }
 

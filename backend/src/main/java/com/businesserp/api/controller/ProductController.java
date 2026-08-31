@@ -83,6 +83,33 @@ public class ProductController {
         return ResponseEntity.ok(java.util.Map.of("message", "Product deleted successfully"));
     }
 
+    @PutMapping("/{id}")
+    public ResponseEntity<Product> updateProduct(@PathVariable Long id, @RequestBody Product updateReq) {
+        Product product = productRepo.findById(id)
+                .orElseThrow(() -> new RuntimeException("Product not found"));
+
+        if (updateReq.getName() != null) product.setName(updateReq.getName());
+        if (updateReq.getSellingPrice() != null) product.setSellingPrice(updateReq.getSellingPrice());
+        if (updateReq.getPurchasePrice() != null) product.setPurchasePrice(updateReq.getPurchasePrice());
+        if (updateReq.getTaxRate() != null) product.setTaxRate(updateReq.getTaxRate());
+        if (updateReq.getHsnCode() != null) product.setHsnCode(updateReq.getHsnCode());
+        if (updateReq.getBarcode() != null) product.setBarcode(updateReq.getBarcode());
+        if (updateReq.getUnit() != null) product.setUnit(updateReq.getUnit());
+        if (updateReq.getMinStockThreshold() != null) product.setMinStockThreshold(updateReq.getMinStockThreshold());
+        if (updateReq.getStockQuantity() != null) product.setStockQuantity(updateReq.getStockQuantity());
+
+        Product saved = productRepo.save(product);
+
+        auditLogRepo.save(AuditLog.builder()
+                .action("PRODUCT_UPDATED")
+                .details("Updated product: " + saved.getName() + " | Price: ₹" + saved.getSellingPrice())
+                .tenant(saved.getTenant())
+                .build());
+
+        broadcastService.broadcast("PRODUCT_MUTATED", saved);
+        return ResponseEntity.ok(saved);
+    }
+
     @PutMapping("/{id}/stock")
     public ResponseEntity<Product> adjustStock(@PathVariable Long id, @RequestParam Double quantity, @RequestParam String mode) {
         Product product = productRepo.findById(id)

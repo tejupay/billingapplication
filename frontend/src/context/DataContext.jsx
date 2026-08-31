@@ -561,6 +561,28 @@ export const DataProvider = ({ children }) => {
     }
   };
 
+  const updateProduct = async (productId, updatedFields, user = {}) => {
+    setProducts(prev => prev.map(p => {
+      if (p.id === productId) {
+        return { ...p, ...updatedFields };
+      }
+      return p;
+    }));
+    addAuditLog('PRODUCT_UPDATED', user?.username || 'owner', user?.role || 'OWNER', `Updated item details/price for #${productId} (${updatedFields.name || ''})`);
+
+    try {
+      const tenantId = getAuthTenantId();
+      await fetch(`${API_BASE_URL}/api/products/${productId}?tenantId=${tenantId}`, {
+        method: 'PUT',
+        headers: getAuthHeaders(),
+        body: JSON.stringify(updatedFields)
+      });
+      fetchFromBackend();
+    } catch (e) {
+      console.error('Product update failed:', e.message);
+    }
+  };
+
   const adjustStock = async (productId, delta, mode, user = {}) => {
     setProducts(prev => prev.map(p => {
       if (p.id === productId) {
@@ -767,6 +789,7 @@ export const DataProvider = ({ children }) => {
       auditLogs,
       expenses,
       addProduct,
+      updateProduct,
       deleteProduct,
       adjustStock,
       addInvoice,

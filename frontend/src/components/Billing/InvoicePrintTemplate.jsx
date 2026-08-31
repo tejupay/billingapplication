@@ -89,10 +89,11 @@ export const InvoicePrintTemplate = ({ invoice, onClose }) => {
   const companyGstin = shopDetails?.gstin || '29EVHUB1234F1Z5';
   const companyEmail = shopDetails?.email || 'yrtmotos@gmail.com';
 
-  // Invoice Items & Calculations
+  // Invoice Items & Accurate GST Calculations
   const rawItems = Array.isArray(invoice.items) ? invoice.items.filter(i => (i.productName || i.name || '').trim()) : [];
   
   let calculatedSubtotal = 0;
+  let taxableTotalSum = 0;
   let calculatedTax = 0;
   let totalDiscount = 0;
 
@@ -119,13 +120,40 @@ export const InvoicePrintTemplate = ({ invoice, onClose }) => {
     }
 
     const halfTaxRate = taxRate / 2;
-    const cgstAmt = isInterState ? 0 : (taxableVal * (halfTaxRate / 100));
-    const sgstAmt = isInterState ? 0 : (taxableVal * (halfTaxRate / 100));
-    const igstAmt = isInterState ? (taxableVal * (taxRate / 100)) : 0;
-    const taxAmt = cgstAmt + sgstAmt + igstAmt;
-    const totalLineAmt = taxableVal + taxAmt;
+    const grossVal = Math.max(0, (rate * qty) - discountAmt);
+    let taxableVal = grossVal;
+    let taxAmt = 0;
+    let cgstAmt = 0;
+    let sgstAmt = 0;
+    let igstAmt = 0;
+    let totalLineAmt = grossVal;
+
+    if (taxRate > 0) {
+      // Check if price entered is inclusive of tax (when totalLine or grandTotal matches grossVal)
+      const rawTotal = Number(item.totalPrice || item.amount || 0);
+      const isInclusive = rawTotal > 0 && Math.abs(rawTotal - grossVal) < 1;
+
+      if (isInclusive) {
+        // Back-calculate Taxable Value accurately: Base = Gross / (1 + TaxRate/100)
+        taxableVal = Math.round((grossVal / (1 + (taxRate / 100))) * 100) / 100;
+        taxAmt = Math.round((grossVal - taxableVal) * 100) / 100;
+        cgstAmt = isInterState ? 0 : Math.round((taxAmt / 2) * 100) / 100;
+        sgstAmt = isInterState ? 0 : Math.round((taxAmt - cgstAmt) * 100) / 100;
+        igstAmt = isInterState ? taxAmt : 0;
+        totalLineAmt = grossVal;
+      } else {
+        // Tax Exclusive: Add tax on top of base
+        taxableVal = grossVal;
+        cgstAmt = isInterState ? 0 : Math.round((taxableVal * (halfTaxRate / 100)) * 100) / 100;
+        sgstAmt = isInterState ? 0 : Math.round((taxableVal * (halfTaxRate / 100)) * 100) / 100;
+        igstAmt = isInterState ? Math.round((taxableVal * (taxRate / 100)) * 100) / 100 : 0;
+        taxAmt = cgstAmt + sgstAmt + igstAmt;
+        totalLineAmt = taxableVal + taxAmt;
+      }
+    }
 
     calculatedSubtotal += (rate * qty);
+    taxableTotalSum += taxableVal;
     calculatedTax += taxAmt;
 
     return {
@@ -144,7 +172,7 @@ export const InvoicePrintTemplate = ({ invoice, onClose }) => {
     };
   });
 
-  const taxableTotal = Math.max(0, calculatedSubtotal - totalDiscount);
+  const taxableTotal = taxableTotalSum;
   const grandTotal = Number(invoice.grandTotal || (taxableTotal + calculatedTax));
   const cgstTotal = isInterState ? 0 : (calculatedTax / 2);
   const sgstTotal = isInterState ? 0 : (calculatedTax / 2);
@@ -158,43 +186,7 @@ export const InvoicePrintTemplate = ({ invoice, onClose }) => {
   const accountHolder = invoice.accountHolderName || companyName;
   const upiId = shopDetails?.upiId || '8105979580-of5a-2@ybl';
   const upiPayString = `upi://pay?pa=${upiId}&pn=${encodeURIComponent(companyName)}&am=${grandTotal.toFixed(2)}&cu=INR&tn=${encodeURIComponent('Invoice_' + (invoice.invoiceNumber || 'EV01'))}`;
-
-  const generatePublicBillUrl = () => {
-    try {
-      const payload = {
-        id: invoice.id,
-        invoiceNumber: invoice.invoiceNumber || 'EV 01',
-        date: invoice.date || new Date().toLocaleDateString('en-IN'),
-        dueDate: invoice.dueDate || invoice.date,
-        customerName: invoice.customerName || invoice.customer?.name || 'Customer',
-        customerPhone: invoice.customerPhone || invoice.customer?.phone || '',
-        billingAddress: invoice.billingAddress || invoice.customer?.address || '',
-        customerGstin: invoice.customerGstin || '',
-        regNo: invoice.regNo || '',
-        stateOfSupply: invoice.stateOfSupply || 'Karnataka',
-        items: Array.isArray(invoice.items) ? invoice.items : [],
-        subtotal: Number(invoice.subtotal || invoice.grandTotal || 0),
-        grandTotal: Number(invoice.grandTotal || 0),
-        paidAmount: Number(invoice.paidAmount || 0),
-        balanceAmount: Number(invoice.balanceAmount || 0),
-        paymentStatus: invoice.paymentStatus || 'PAID',
-        paymentMethod: invoice.paymentMethod || 'ONLINE',
-        bankName: invoice.bankName || 'Canara Bank',
-        accountNo: invoice.accountNo || '120001017346',
-        ifscCode: invoice.ifscCode || 'CNRB0001199',
-        accountHolderName: invoice.accountHolderName || companyName,
-        termsAndConditions: invoice.termsAndConditions || ''
-      };
-      const jsonStr = JSON.stringify(payload);
-      const base64 = btoa(unescape(encodeURIComponent(jsonStr)));
-      const origin = window.location.origin;
-      return `${origin}/?bill=${encodeURIComponent(invoice.invoiceNumber || 'EV01')}&data=${encodeURIComponent(base64)}`;
-    } catch (e) {
-      return window.location.origin;
-    }
-  };
-
-  const publicBillLink = generatePublicBillUrl();
+  const termsAndConditions = invoice.termsAndConditions || shopDetails?.termsAndConditions || '1. Warranty applies as per manufacturer terms.\n2. Physical and water damage will not be covered under warranty.';
 
   return (
     <div className="fixed inset-0 bg-slate-950/85 backdrop-blur-md flex items-center justify-center p-2 sm:p-4 z-50 overflow-y-auto print:p-0 print:bg-white print:static print:overflow-visible">
@@ -230,11 +222,8 @@ export const InvoicePrintTemplate = ({ invoice, onClose }) => {
                 `🏢 *${companyName}*\n` +
                 `----------------------------------------\n` +
                 `👤 *Customer:* ${invoice.customerName || 'Customer'}\n` +
-                `💰 *TOTAL AMOUNT:* *₹${grandTotal.toLocaleString('en-IN')}*\n\n` +
-                `📥 *OFFICIAL PDF INVOICE DOWNLOAD LINK:*\n` +
-                `👉 ${publicBillLink}\n` +
-                `_(Direct PDF Link — opens and downloads your official PDF invoice directly to your phone)_\n\n` +
-                `⚡ *1-CLICK UPI PAYMENT LINK:*\n` +
+                `💰 *TOTAL AMOUNT:* *₹${grandTotal.toLocaleString('en-IN', { minimumFractionDigits: 2 })}*\n\n` +
+                `⚡ *1-CLICK UPI PAYMENT LINK (PhonePe / GPay / Paytm):*\n` +
                 `👉 ${upiPayString}\n\n` +
                 `🏦 UPI ID: ${upiId}\n\n` +
                 `Thank you for choosing ${companyName}! 🙏`

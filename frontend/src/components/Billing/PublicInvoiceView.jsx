@@ -72,6 +72,7 @@ export const PublicInvoiceView = ({ invoice }) => {
   const rawItems = Array.isArray(invoice.items) ? invoice.items.filter(i => (i.productName || i.name || '').trim()) : [];
   
   let calculatedSubtotal = 0;
+  let taxableTotalSum = 0;
   let calculatedTax = 0;
   let totalDiscount = 0;
 
@@ -98,13 +99,37 @@ export const PublicInvoiceView = ({ invoice }) => {
     }
 
     const halfTaxRate = taxRate / 2;
-    const cgstAmt = isInterState ? 0 : (taxableVal * (halfTaxRate / 100));
-    const sgstAmt = isInterState ? 0 : (taxableVal * (halfTaxRate / 100));
-    const igstAmt = isInterState ? (taxableVal * (taxRate / 100)) : 0;
-    const taxAmt = cgstAmt + sgstAmt + igstAmt;
-    const totalLineAmt = taxableVal + taxAmt;
+    const grossVal = Math.max(0, (rate * qty) - discountAmt);
+    let taxableVal = grossVal;
+    let taxAmt = 0;
+    let cgstAmt = 0;
+    let sgstAmt = 0;
+    let igstAmt = 0;
+    let totalLineAmt = grossVal;
+
+    if (taxRate > 0) {
+      const rawTotal = Number(item.totalPrice || item.amount || 0);
+      const isInclusive = rawTotal > 0 && Math.abs(rawTotal - grossVal) < 1;
+
+      if (isInclusive) {
+        taxableVal = Math.round((grossVal / (1 + (taxRate / 100))) * 100) / 100;
+        taxAmt = Math.round((grossVal - taxableVal) * 100) / 100;
+        cgstAmt = isInterState ? 0 : Math.round((taxAmt / 2) * 100) / 100;
+        sgstAmt = isInterState ? 0 : Math.round((taxAmt - cgstAmt) * 100) / 100;
+        igstAmt = isInterState ? taxAmt : 0;
+        totalLineAmt = grossVal;
+      } else {
+        taxableVal = grossVal;
+        cgstAmt = isInterState ? 0 : Math.round((taxableVal * (halfTaxRate / 100)) * 100) / 100;
+        sgstAmt = isInterState ? 0 : Math.round((taxableVal * (halfTaxRate / 100)) * 100) / 100;
+        igstAmt = isInterState ? Math.round((taxableVal * (taxRate / 100)) * 100) / 100 : 0;
+        taxAmt = cgstAmt + sgstAmt + igstAmt;
+        totalLineAmt = taxableVal + taxAmt;
+      }
+    }
 
     calculatedSubtotal += (rate * qty);
+    taxableTotalSum += taxableVal;
     calculatedTax += taxAmt;
 
     return {
@@ -123,7 +148,7 @@ export const PublicInvoiceView = ({ invoice }) => {
     };
   });
 
-  const taxableTotal = Math.max(0, calculatedSubtotal - totalDiscount);
+  const taxableTotal = taxableTotalSum;
   const grandTotal = Number(invoice.grandTotal || (taxableTotal + calculatedTax));
   const cgstTotal = isInterState ? 0 : (calculatedTax / 2);
   const sgstTotal = isInterState ? 0 : (calculatedTax / 2);

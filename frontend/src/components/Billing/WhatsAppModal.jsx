@@ -126,11 +126,12 @@ Thank you for choosing ${shopName}! 🙏`;
       const rawItems  = Array.isArray(invoice.items) ? invoice.items.filter(i => (i.productName || i.name || '').trim()) : [];
       const isInterState = stateSupply.toLowerCase().includes('inter');
 
-      // Bank details
-      const iBankName   = invoice.bankName || shopDetails?.bankName || 'Canara Bank';
-      const iAccountNo  = invoice.accountNo || shopDetails?.accountNo || '120001017346';
-      const iIfscCode   = invoice.ifscCode || shopDetails?.ifscCode || 'CNRB0001199';
-      const iAccHolder  = invoice.accountHolderName || companyName;
+      // Bank details (Karnataka Bank)
+      const iBankName   = invoice.bankName || shopDetails?.bankName || 'Karnataka Bank';
+      const iAccountNo  = invoice.accountNo || shopDetails?.accountNo || '0894202500006001';
+      const iIfscCode   = invoice.ifscCode || shopDetails?.ifscCode || 'KARB0000894';
+      const iAccHolder  = invoice.accountHolderName || shopDetails?.accountHolderName || 'M/S YASHAS EV SERVICES';
+      const iBranch     = invoice.branch || shopDetails?.branch || 'Bengaluru - Thippenahalli';
       const iUpiId      = shopDetails?.upiId || '8105979580-of5a-2@ybl';
 
       let calculatedSubtotal = 0;
@@ -359,8 +360,9 @@ Thank you for choosing ${shopName}! 🙏`;
         ['Account Holder Name', iAccHolder],
         ['Account Number', iAccountNo],
         ['IFSC', iIfscCode],
-        ['Account Type', 'Current'],
+        ['Account Type', 'Current Account (C/A)'],
         ['Bank', iBankName],
+        ['Branch', iBranch],
         ['UPI', iUpiId],
       ];
 

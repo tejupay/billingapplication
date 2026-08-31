@@ -52,14 +52,14 @@ public class BusinessErpApplication {
             if (tenantRepo.count() == 0) {
                 // 1. Seed Tenant
                 Tenant tenant = Tenant.builder()
-                        .name("Yashas EV Service")
+                        .name("YASHAS EV SERVICE")
                         .gstin("29EVHUB1234F1Z5")
                         .phone("+91 7676424061")
                         .email("yrtmotos@gmail.com")
                         .address("1/9 A.M Complex, Next To Just Bake, Opp to C.B Kallu Metro Station, Bangalore - 560073")
-                        .bankName("Canara Bank")
-                        .accountNumber("120001017346")
-                        .ifscCode("CNRB0001199")
+                        .bankName("Karnataka Bank")
+                        .accountNumber("0894202500006001")
+                        .ifscCode("KARB0000894")
                         .upiId("8105979580-of5a-2@ybl")
                         .build();
                 tenant = tenantRepo.save(tenant);
@@ -216,14 +216,14 @@ public class BusinessErpApplication {
 
             // Ensure default owner accounts exist and are active
             Tenant primaryTenant = tenantRepo.findAll().stream().findFirst().orElseGet(() -> tenantRepo.save(Tenant.builder()
-                    .name("Yashas EV Service")
+                    .name("YASHAS EV SERVICE")
                     .gstin("29EVHUB1234F1Z5")
                     .phone("+91 7676424061")
                     .email("yrtmotos@gmail.com")
                     .address("1/9 A.M Complex, Next To Just Bake, Opp to C.B Kallu Metro Station, Bangalore - 560073")
-                    .bankName("Canara Bank")
-                    .accountNumber("120001017346")
-                    .ifscCode("CNRB0001199")
+                    .bankName("Karnataka Bank")
+                    .accountNumber("0894202500006001")
+                    .ifscCode("KARB0000894")
                     .upiId("8105979580-of5a-2@ybl")
                     .build()));
 

@@ -57,9 +57,13 @@ export const INITIAL_COMPANY_DETAILS = {
   gstin: '29EVHUB1234F1Z5',
   address: '1/9 A.M Complex, Next To Just Bake, Opp to C.B Kallu Metro Station, Bangalore - 560073',
   upiId: '8105979580-of5a-2@ybl',
-  bankName: 'Canara Bank',
-  accountNo: '120001017346',
-  ifscCode: 'CNRB0001199',
+  accountHolderName: 'M/S YASHAS EV SERVICES',
+  bankName: 'Karnataka Bank',
+  accountNo: '0894202500006001',
+  ifscCode: 'KARB0000894',
+  branch: 'Bengaluru - Thippenahalli',
+  accountType: 'Current Account (C/A)',
+  micrCode: '560052135',
   termsAndConditions: 'Warranty applies as per manufacturer terms. Physical and water damage are not covered under warranty. Thank you for choosing Yashas EV Service!'
 };
 

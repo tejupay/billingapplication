@@ -770,7 +770,7 @@ export const CreateInvoiceModal = ({ isOpen, onClose, onPrintInvoice, editingInv
                     value={bankName}
                     onChange={(e) => setBankName(e.target.value)}
                     className="w-full bg-slate-900 border border-slate-700 rounded px-2 py-1 text-white text-xs"
-                    placeholder="e.g. Canara Bank"
+                    placeholder="e.g. Karnataka Bank"
                   />
                 </div>
                 <div>
@@ -780,7 +780,7 @@ export const CreateInvoiceModal = ({ isOpen, onClose, onPrintInvoice, editingInv
                     value={accountNo}
                     onChange={(e) => setAccountNo(e.target.value)}
                     className="w-full bg-slate-900 border border-slate-700 rounded px-2 py-1 text-white font-mono text-xs"
-                    placeholder="e.g. 120001017346"
+                    placeholder="e.g. 0894202500006001"
                   />
                 </div>
                 <div>
@@ -790,7 +790,7 @@ export const CreateInvoiceModal = ({ isOpen, onClose, onPrintInvoice, editingInv
                     value={ifscCode}
                     onChange={(e) => setIfscCode(e.target.value.toUpperCase())}
                     className="w-full bg-slate-900 border border-slate-700 rounded px-2 py-1 text-white font-mono text-xs uppercase"
-                    placeholder="e.g. CNRB0001199"
+                    placeholder="e.g. KARB0000894"
                   />
                 </div>
                 <div>
@@ -800,7 +800,7 @@ export const CreateInvoiceModal = ({ isOpen, onClose, onPrintInvoice, editingInv
                     value={accountHolderName}
                     onChange={(e) => setAccountHolderName(e.target.value)}
                     className="w-full bg-slate-900 border border-slate-700 rounded px-2 py-1 text-white text-xs"
-                    placeholder="e.g. YRT Motors"
+                    placeholder="e.g. M/S YASHAS EV SERVICES"
                   />
                 </div>
               </div>

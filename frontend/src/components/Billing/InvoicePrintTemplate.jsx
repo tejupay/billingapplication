@@ -179,11 +179,13 @@ export const InvoicePrintTemplate = ({ invoice, onClose }) => {
   const igstTotal = isInterState ? calculatedTax : 0;
   const amountInWords = convertNumberToWords(grandTotal);
 
-  // Bank & UPI Details
-  const bankName = invoice.bankName || shopDetails?.bankName || 'Canara Bank';
-  const accountNo = invoice.accountNo || shopDetails?.accountNo || '120001017346';
-  const ifscCode = invoice.ifscCode || shopDetails?.ifscCode || 'CNRB0001199';
-  const accountHolder = invoice.accountHolderName || companyName;
+  // Bank & UPI Details (Karnataka Bank - Current Account)
+  const bankName = invoice.bankName || shopDetails?.bankName || 'Karnataka Bank';
+  const accountNo = invoice.accountNo || shopDetails?.accountNo || '0894202500006001';
+  const ifscCode = invoice.ifscCode || shopDetails?.ifscCode || 'KARB0000894';
+  const accountHolder = invoice.accountHolderName || shopDetails?.accountHolderName || 'M/S YASHAS EV SERVICES';
+  const branchName = invoice.branch || shopDetails?.branch || 'Bengaluru - Thippenahalli';
+  const accountType = invoice.accountType || shopDetails?.accountType || 'Current Account (C/A)';
   const upiId = shopDetails?.upiId || '8105979580-of5a-2@ybl';
   const upiPayString = `upi://pay?pa=${upiId}&pn=${encodeURIComponent(companyName)}&am=${grandTotal.toFixed(2)}&cu=INR&tn=${encodeURIComponent('Invoice_' + (invoice.invoiceNumber || 'EV01'))}`;
   const termsAndConditions = invoice.termsAndConditions || shopDetails?.termsAndConditions || '1. Warranty applies as per manufacturer terms.\n2. Physical and water damage will not be covered under warranty.';
@@ -414,11 +416,15 @@ export const InvoicePrintTemplate = ({ invoice, onClose }) => {
                       </div>
                       <div className="grid grid-cols-2 gap-2">
                         <span>Account Type</span>
-                        <span className="text-slate-800">Current</span>
+                        <span className="text-slate-800 font-semibold">{accountType}</span>
                       </div>
                       <div className="grid grid-cols-2 gap-2">
                         <span>Bank</span>
-                        <span className="text-slate-800">{bankName}</span>
+                        <span className="text-slate-800 font-semibold">{bankName}</span>
+                      </div>
+                      <div className="grid grid-cols-2 gap-2">
+                        <span>Branch</span>
+                        <span className="text-slate-800">{branchName}</span>
                       </div>
                       <div className="grid grid-cols-2 gap-2">
                         <span>UPI</span>

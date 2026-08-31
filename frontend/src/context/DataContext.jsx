@@ -68,90 +68,99 @@ export const INITIAL_COMPANY_DETAILS = {
 };
 
 const INITIAL_PRODUCTS = [
-  {
-    id: 1,
-    name: 'EV Lithium-Ion Battery 60V 30Ah',
-    barcode: '890123456701',
-    hsnCode: '85076000',
-    category: 'Batteries',
-    brand: 'EV Cell Tech',
-    purchasePrice: 22000,
-    sellingPrice: 28500,
-    taxRate: 18,
-    stockQuantity: 10,
-    minStockThreshold: 3,
-    unit: 'Nos'
-  },
-  {
-    id: 2,
-    name: 'EV Motor Controller 60V/72V 1000W',
-    barcode: '890123456702',
-    hsnCode: '85044090',
-    category: 'Electronics',
-    brand: 'BLDC Power',
-    purchasePrice: 2800,
-    sellingPrice: 4200,
-    taxRate: 18,
-    stockQuantity: 15,
-    minStockThreshold: 4,
-    unit: 'Nos'
-  },
-  {
-    id: 3,
-    name: 'EV Tubeless Tyre 90/90-12',
-    barcode: '890123456703',
-    hsnCode: '40111010',
-    category: 'Tyres',
-    brand: 'MRF / CEAT',
-    purchasePrice: 1200,
-    sellingPrice: 1750,
-    taxRate: 18,
-    stockQuantity: 30,
-    minStockThreshold: 6,
-    unit: 'Nos'
-  },
-  {
-    id: 4,
-    name: 'EV Disc Brake Pad (Front/Rear)',
-    barcode: '890123456704',
-    hsnCode: '87149420',
-    category: 'Brake System',
-    brand: 'E-Brake',
-    purchasePrice: 180,
-    sellingPrice: 350,
-    taxRate: 18,
-    stockQuantity: 40,
-    minStockThreshold: 10,
-    unit: 'Nos'
-  },
-  {
-    id: 5,
-    name: 'EV Throttle Assembly with 3-Speed Switch',
-    barcode: '890123456705',
-    hsnCode: '87149990',
-    category: 'Controls',
-    brand: 'SpeedGrip',
-    purchasePrice: 350,
-    sellingPrice: 650,
-    taxRate: 18,
-    stockQuantity: 20,
-    minStockThreshold: 5,
-    unit: 'Nos'
-  },
-  {
-    id: 6,
-    name: 'EV Full General Service & Battery Diagnostics',
-    barcode: '890123456706',
-    hsnCode: '998729',
-    category: 'Services',
-    brand: 'In-House EV Lab',
-    purchasePrice: 0,
-    sellingPrice: 850,
-    taxRate: 18,
-    stockQuantity: 999,
-    minStockThreshold: 1,
-    unit: 'Nos'
-  }
+  // 1. General Service & Consumables
+  { id: 1, name: 'Grease / Lubricant', barcode: '890123456001', hsnCode: '27101980', category: 'Service Consumable', brand: 'Yashas Care', purchasePrice: 120, sellingPrice: 250, taxRate: 18, stockQuantity: 25, minStockThreshold: 5, unit: 'Bottle' },
+  { id: 2, name: 'Multipurpose Grease', barcode: '890123456002', hsnCode: '27101980', category: 'Service Consumable', brand: 'Yashas Care', purchasePrice: 150, sellingPrice: 300, taxRate: 18, stockQuantity: 30, minStockThreshold: 5, unit: 'Pcs' },
+  { id: 3, name: 'Chain Lubricant', barcode: '890123456003', hsnCode: '34031900', category: 'Service Consumable', brand: 'Yashas Care', purchasePrice: 180, sellingPrice: 350, taxRate: 18, stockQuantity: 30, minStockThreshold: 5, unit: 'Bottle' },
+  { id: 4, name: 'Contact Cleaner', barcode: '890123456004', hsnCode: '38140010', category: 'Electrical Cleaning', brand: 'ElectraClean', purchasePrice: 220, sellingPrice: 450, taxRate: 18, stockQuantity: 20, minStockThreshold: 4, unit: 'Bottle' },
+  { id: 5, name: 'Electrical Insulation Tape', barcode: '890123456005', hsnCode: '39191000', category: 'Electrical Work', brand: 'GripTape', purchasePrice: 20, sellingPrice: 50, taxRate: 18, stockQuantity: 100, minStockThreshold: 20, unit: 'Nos' },
+  { id: 6, name: 'Heat Shrink Sleeve', barcode: '890123456006', hsnCode: '39173290', category: 'Electrical Work', brand: 'SleevePro', purchasePrice: 40, sellingPrice: 100, taxRate: 18, stockQuantity: 50, minStockThreshold: 10, unit: 'Set' },
+  { id: 7, name: 'Cable Ties', barcode: '890123456007', hsnCode: '39269099', category: 'Electrical Work', brand: 'TieMaster', purchasePrice: 30, sellingPrice: 80, taxRate: 18, stockQuantity: 100, minStockThreshold: 20, unit: 'Set' },
+  { id: 8, name: 'Cleaning Spray / Degreaser', barcode: '890123456008', hsnCode: '34029099', category: 'Cleaning', brand: 'EcoClean', purchasePrice: 160, sellingPrice: 320, taxRate: 18, stockQuantity: 25, minStockThreshold: 5, unit: 'Bottle' },
+  { id: 9, name: 'Microfiber Cloth', barcode: '890123456009', hsnCode: '63071010', category: 'Cleaning', brand: 'SoftWipe', purchasePrice: 40, sellingPrice: 100, taxRate: 12, stockQuantity: 50, minStockThreshold: 10, unit: 'Nos' },
+  { id: 10, name: 'Brake Cleaner', barcode: '890123456010', hsnCode: '38140010', category: 'Brake Service', brand: 'BrakeClean', purchasePrice: 190, sellingPrice: 380, taxRate: 18, stockQuantity: 25, minStockThreshold: 5, unit: 'Bottle' },
+
+  // 2. Brakes & Wheels
+  { id: 11, name: 'Front Brake Pad Set', barcode: '890123456011', hsnCode: '87141090', category: 'Brake Component', brand: 'E-Brake', purchasePrice: 180, sellingPrice: 380, taxRate: 18, stockQuantity: 40, minStockThreshold: 10, unit: 'Pair/set' },
+  { id: 12, name: 'Rear Brake Pad Set', barcode: '890123456012', hsnCode: '87141090', category: 'Brake Component', brand: 'E-Brake', purchasePrice: 180, sellingPrice: 380, taxRate: 18, stockQuantity: 40, minStockThreshold: 10, unit: 'Pair/set' },
+  { id: 13, name: 'Brake Shoe Set', barcode: '890123456013', hsnCode: '87141090', category: 'Brake Component', brand: 'E-Brake', purchasePrice: 220, sellingPrice: 450, taxRate: 18, stockQuantity: 30, minStockThreshold: 8, unit: 'Set' },
+  { id: 14, name: 'Brake Disc / Rotor', barcode: '890123456014', hsnCode: '87141090', category: 'Brake Component', brand: 'RotorTech', purchasePrice: 450, sellingPrice: 850, taxRate: 18, stockQuantity: 20, minStockThreshold: 5, unit: 'Nos' },
+  { id: 15, name: 'Brake Lever', barcode: '890123456015', hsnCode: '87141090', category: 'Brake Component', brand: 'AlloyGrip', purchasePrice: 120, sellingPrice: 250, taxRate: 18, stockQuantity: 35, minStockThreshold: 8, unit: 'Nos' },
+  { id: 16, name: 'Brake Cable', barcode: '890123456016', hsnCode: '87141090', category: 'Brake Component', brand: 'FlexiCore', purchasePrice: 110, sellingPrice: 220, taxRate: 18, stockQuantity: 30, minStockThreshold: 6, unit: 'Nos' },
+  { id: 17, name: 'Brake Caliper', barcode: '890123456017', hsnCode: '87141090', category: 'Brake Component', brand: 'HydroStop', purchasePrice: 650, sellingPrice: 1250, taxRate: 18, stockQuantity: 15, minStockThreshold: 4, unit: 'Nos' },
+  { id: 18, name: 'Brake Fluid', barcode: '890123456018', hsnCode: '38190010', category: 'Brake Consumable', brand: 'DOT4 Fluid', purchasePrice: 90, sellingPrice: 180, taxRate: 18, stockQuantity: 40, minStockThreshold: 10, unit: 'Bottle' },
+  { id: 19, name: 'Wheel Bearing', barcode: '890123456019', hsnCode: '84821011', category: 'Wheel Component', brand: 'SKF / NBC', purchasePrice: 80, sellingPrice: 180, taxRate: 18, stockQuantity: 50, minStockThreshold: 15, unit: 'Nos' },
+  { id: 20, name: 'Tyre', barcode: '890123456020', hsnCode: '40114000', category: 'Wheel Component', brand: 'MRF / CEAT', purchasePrice: 950, sellingPrice: 1550, taxRate: 28, stockQuantity: 25, minStockThreshold: 6, unit: 'Nos' },
+  { id: 21, name: 'Inner Tube', barcode: '890123456021', hsnCode: '40139049', category: 'Wheel Component', brand: 'CEAT / MRF', purchasePrice: 180, sellingPrice: 320, taxRate: 18, stockQuantity: 30, minStockThreshold: 8, unit: 'Nos' },
+  { id: 22, name: 'Tubeless Valve', barcode: '890123456022', hsnCode: '84818090', category: 'Wheel Component', brand: 'BrassCore', purchasePrice: 30, sellingPrice: 80, taxRate: 18, stockQuantity: 60, minStockThreshold: 15, unit: 'Nos' },
+  { id: 23, name: 'Wheel Rim', barcode: '890123456023', hsnCode: '87141090', category: 'Wheel Component', brand: 'AlloyWheel', purchasePrice: 1200, sellingPrice: 2100, taxRate: 18, stockQuantity: 12, minStockThreshold: 3, unit: 'Nos' },
+  { id: 24, name: 'Puncture Repair Kit', barcode: '890123456024', hsnCode: '82055900', category: 'Repair Consumable', brand: 'QuickFix', purchasePrice: 150, sellingPrice: 300, taxRate: 18, stockQuantity: 20, minStockThreshold: 5, unit: 'Kit' },
+
+  // 3. EV Electrical & Control Components
+  { id: 25, name: 'BLDC Motor Controller', barcode: '890123456025', hsnCode: '85371000', category: 'EV Electrical', brand: 'BLDC Power', purchasePrice: 2200, sellingPrice: 3800, taxRate: 18, stockQuantity: 15, minStockThreshold: 3, unit: 'Nos' },
+  { id: 26, name: 'DC-DC Converter', barcode: '890123456026', hsnCode: '85044090', category: 'EV Electrical', brand: 'VoltStep', purchasePrice: 350, sellingPrice: 750, taxRate: 18, stockQuantity: 25, minStockThreshold: 5, unit: 'Nos' },
+  { id: 27, name: 'DC Fuse', barcode: '890123456027', hsnCode: '85361010', category: 'Protection', brand: 'SafeFuse', purchasePrice: 20, sellingPrice: 60, taxRate: 18, stockQuantity: 100, minStockThreshold: 20, unit: 'Nos' },
+  { id: 28, name: 'Fuse Holder', barcode: '890123456028', hsnCode: '85369090', category: 'Protection', brand: 'SafeFuse', purchasePrice: 30, sellingPrice: 80, taxRate: 18, stockQuantity: 60, minStockThreshold: 15, unit: 'Nos' },
+  { id: 29, name: 'Main Wiring Harness', barcode: '890123456029', hsnCode: '85443000', category: 'Electrical', brand: 'WireTech', purchasePrice: 850, sellingPrice: 1650, taxRate: 18, stockQuantity: 15, minStockThreshold: 4, unit: 'Nos' },
+  { id: 30, name: 'Charging Port / Socket', barcode: '890123456030', hsnCode: '85366990', category: 'Charging', brand: 'EV Port', purchasePrice: 250, sellingPrice: 550, taxRate: 18, stockQuantity: 25, minStockThreshold: 6, unit: 'Nos' },
+  { id: 31, name: 'Ignition / Key Switch', barcode: '890123456031', hsnCode: '85365020', category: 'Control', brand: 'KeyLock', purchasePrice: 220, sellingPrice: 450, taxRate: 18, stockQuantity: 25, minStockThreshold: 5, unit: 'Nos' },
+  { id: 32, name: 'Power / Mode Switch', barcode: '890123456032', hsnCode: '85365020', category: 'Control', brand: 'SwitchMaster', purchasePrice: 150, sellingPrice: 320, taxRate: 18, stockQuantity: 30, minStockThreshold: 6, unit: 'Nos' },
+  { id: 33, name: 'Horn', barcode: '890123456033', hsnCode: '85123010', category: 'Electrical', brand: 'SoundWave', purchasePrice: 140, sellingPrice: 280, taxRate: 18, stockQuantity: 35, minStockThreshold: 8, unit: 'Nos' },
+  { id: 34, name: 'LED Headlight', barcode: '890123456034', hsnCode: '85122010', category: 'Lighting', brand: 'BrightBeam', purchasePrice: 450, sellingPrice: 950, taxRate: 18, stockQuantity: 20, minStockThreshold: 5, unit: 'Nos' },
+  { id: 35, name: 'Tail Light', barcode: '890123456035', hsnCode: '85122010', category: 'Lighting', brand: 'BrightBeam', purchasePrice: 280, sellingPrice: 580, taxRate: 18, stockQuantity: 20, minStockThreshold: 5, unit: 'Nos' },
+  { id: 36, name: 'Indicator Set', barcode: '890123456036', hsnCode: '85122010', category: 'Lighting', brand: 'BrightBeam', purchasePrice: 220, sellingPrice: 480, taxRate: 18, stockQuantity: 25, minStockThreshold: 6, unit: 'Set' },
+  { id: 37, name: 'Brake Light Switch', barcode: '890123456037', hsnCode: '85365020', category: 'Electrical', brand: 'SensorTech', purchasePrice: 60, sellingPrice: 140, taxRate: 18, stockQuantity: 40, minStockThreshold: 10, unit: 'Nos' },
+  { id: 38, name: 'Side-Stand Switch', barcode: '890123456038', hsnCode: '85365020', category: 'Safety switch', brand: 'SensorTech', purchasePrice: 120, sellingPrice: 260, taxRate: 18, stockQuantity: 25, minStockThreshold: 5, unit: 'Nos' },
+  { id: 39, name: 'Throttle Assembly', barcode: '890123456039', hsnCode: '87141090', category: 'Control', brand: 'SpeedGrip', purchasePrice: 350, sellingPrice: 700, taxRate: 18, stockQuantity: 30, minStockThreshold: 6, unit: 'Nos' },
+  { id: 40, name: 'DC Relay', barcode: '890123456040', hsnCode: '85364100', category: 'Electrical', brand: 'PowerRelay', purchasePrice: 90, sellingPrice: 200, taxRate: 18, stockQuantity: 40, minStockThreshold: 10, unit: 'Nos' },
+  { id: 41, name: 'Display / Instrument Cluster', barcode: '890123456041', hsnCode: '90292090', category: 'Control/display', brand: 'DigiDash', purchasePrice: 1400, sellingPrice: 2600, taxRate: 18, stockQuantity: 10, minStockThreshold: 3, unit: 'Nos' },
+  { id: 42, name: 'DC Motor Cable Set', barcode: '890123456042', hsnCode: '85443000', category: 'Motor electrical', brand: 'HeavyWire', purchasePrice: 300, sellingPrice: 650, taxRate: 18, stockQuantity: 20, minStockThreshold: 5, unit: 'Set' },
+
+  // 4. Motor, Drivetrain & Suspension
+  { id: 43, name: 'BLDC Hub Motor', barcode: '890123456043', hsnCode: '85013119', category: 'Motor', brand: 'HubDrive', purchasePrice: 4500, sellingPrice: 7500, taxRate: 18, stockQuantity: 8, minStockThreshold: 2, unit: 'Nos' },
+  { id: 44, name: 'Motor Hall Sensor', barcode: '890123456044', hsnCode: '85414011', category: 'Motor electrical', brand: 'HallPCB', purchasePrice: 150, sellingPrice: 350, taxRate: 18, stockQuantity: 30, minStockThreshold: 6, unit: 'Nos' },
+  { id: 45, name: 'Hall Sensor Cable', barcode: '890123456045', hsnCode: '85444299', category: 'Motor electrical', brand: 'FlexCore', purchasePrice: 80, sellingPrice: 180, taxRate: 18, stockQuantity: 35, minStockThreshold: 8, unit: 'Nos' },
+  { id: 46, name: 'Motor Connector', barcode: '890123456046', hsnCode: '85366990', category: 'Motor electrical', brand: 'PlugPro', purchasePrice: 90, sellingPrice: 220, taxRate: 18, stockQuantity: 40, minStockThreshold: 10, unit: 'Nos' },
+  { id: 47, name: 'Motor Axle Nut', barcode: '890123456047', hsnCode: '73181600', category: 'Motor hardware', brand: 'SteelNut', purchasePrice: 30, sellingPrice: 80, taxRate: 18, stockQuantity: 50, minStockThreshold: 15, unit: 'Nos' },
+  { id: 48, name: 'Drive Belt', barcode: '890123456048', hsnCode: '40103999', category: 'Drivetrain', brand: 'BeltPro', purchasePrice: 450, sellingPrice: 950, taxRate: 18, stockQuantity: 18, minStockThreshold: 4, unit: 'Nos' },
+  { id: 49, name: 'Drive Chain', barcode: '890123456049', hsnCode: '73151100', category: 'Drivetrain', brand: 'RollChain', purchasePrice: 380, sellingPrice: 750, taxRate: 18, stockQuantity: 20, minStockThreshold: 5, unit: 'Nos' },
+  { id: 50, name: 'Sprocket', barcode: '890123456050', hsnCode: '87141090', category: 'Drivetrain', brand: 'GearWheel', purchasePrice: 220, sellingPrice: 480, taxRate: 18, stockQuantity: 22, minStockThreshold: 5, unit: 'Nos' },
+  { id: 51, name: 'Chain Tensioner', barcode: '890123456051', hsnCode: '87141090', category: 'Drivetrain', brand: 'ChainGuide', purchasePrice: 180, sellingPrice: 380, taxRate: 18, stockQuantity: 20, minStockThreshold: 5, unit: 'Nos' },
+  { id: 52, name: 'Rear Shock Absorber', barcode: '890123456052', hsnCode: '87141090', category: 'Suspension', brand: 'ShockPro', purchasePrice: 650, sellingPrice: 1350, taxRate: 18, stockQuantity: 15, minStockThreshold: 4, unit: 'Nos' },
+  { id: 53, name: 'Front Fork Oil Seal', barcode: '890123456053', hsnCode: '84842000', category: 'Suspension', brand: 'OilSeal Pro', purchasePrice: 120, sellingPrice: 280, taxRate: 18, stockQuantity: 30, minStockThreshold: 8, unit: 'Set' },
+  { id: 54, name: 'Front Fork Seal', barcode: '890123456054', hsnCode: '84842000', category: 'Suspension', brand: 'DustSeal', purchasePrice: 110, sellingPrice: 260, taxRate: 18, stockQuantity: 30, minStockThreshold: 8, unit: 'Set' },
+  { id: 55, name: 'Front Fork Assembly', barcode: '890123456055', hsnCode: '87141090', category: 'Suspension', brand: 'ForkMaster', purchasePrice: 1800, sellingPrice: 3200, taxRate: 18, stockQuantity: 8, minStockThreshold: 2, unit: 'Set' },
+
+  // 5. Body, Controls & Accessories
+  { id: 56, name: 'Rear View Mirror', barcode: '890123456056', hsnCode: '87141090', category: 'Body/control', brand: 'VisionGrip', purchasePrice: 140, sellingPrice: 300, taxRate: 18, stockQuantity: 30, minStockThreshold: 6, unit: 'Nos' },
+  { id: 57, name: 'Handlebar Grip', barcode: '890123456057', hsnCode: '87141090', category: 'Control', brand: 'ComfortGrip', purchasePrice: 90, sellingPrice: 200, taxRate: 18, stockQuantity: 35, minStockThreshold: 8, unit: 'Pair' },
+  { id: 58, name: 'Throttle Grip', barcode: '890123456058', hsnCode: '87141090', category: 'Control', brand: 'ComfortGrip', purchasePrice: 110, sellingPrice: 240, taxRate: 18, stockQuantity: 30, minStockThreshold: 6, unit: 'Nos' },
+  { id: 59, name: 'Footrest', barcode: '890123456059', hsnCode: '87141090', category: 'Body', brand: 'AlloyStep', purchasePrice: 150, sellingPrice: 320, taxRate: 18, stockQuantity: 25, minStockThreshold: 6, unit: 'Pair' },
+  { id: 60, name: 'Side Stand', barcode: '890123456060', hsnCode: '87141090', category: 'Body', brand: 'SteelStand', purchasePrice: 160, sellingPrice: 350, taxRate: 18, stockQuantity: 25, minStockThreshold: 6, unit: 'Nos' },
+  { id: 61, name: 'Main Stand', barcode: '890123456061', hsnCode: '87141090', category: 'Body', brand: 'SteelStand', purchasePrice: 320, sellingPrice: 680, taxRate: 18, stockQuantity: 15, minStockThreshold: 4, unit: 'Nos' },
+  { id: 62, name: 'Number Plate Holder', barcode: '890123456062', hsnCode: '87141090', category: 'Body', brand: 'PlateFit', purchasePrice: 60, sellingPrice: 150, taxRate: 18, stockQuantity: 40, minStockThreshold: 10, unit: 'Nos' },
+  { id: 63, name: 'Mudguard', barcode: '890123456063', hsnCode: '87141090', category: 'Body', brand: 'FiberGuard', purchasePrice: 350, sellingPrice: 750, taxRate: 18, stockQuantity: 20, minStockThreshold: 5, unit: 'Nos' },
+  { id: 64, name: 'Body Panel', barcode: '890123456064', hsnCode: '87141090', category: 'Body', brand: 'ABS Panel', purchasePrice: 800, sellingPrice: 1600, taxRate: 18, stockQuantity: 12, minStockThreshold: 3, unit: 'Nos' },
+  { id: 65, name: 'Seat Cover', barcode: '890123456065', hsnCode: '87141090', category: 'Body', brand: 'LeatherFit', purchasePrice: 180, sellingPrice: 380, taxRate: 18, stockQuantity: 30, minStockThreshold: 6, unit: 'Nos' },
+  { id: 66, name: 'Key Set', barcode: '890123456066', hsnCode: '83012000', category: 'Security/control', brand: 'SecureLock', purchasePrice: 280, sellingPrice: 580, taxRate: 18, stockQuantity: 20, minStockThreshold: 5, unit: 'Set' },
+  { id: 67, name: 'USB Charging Port', barcode: '890123456067', hsnCode: '85044090', category: 'Accessory', brand: 'FastCharge', purchasePrice: 160, sellingPrice: 350, taxRate: 18, stockQuantity: 25, minStockThreshold: 5, unit: 'Nos' },
+  { id: 68, name: 'Mobile Holder', barcode: '890123456068', hsnCode: '87141090', category: 'Accessory', brand: 'RideMount', purchasePrice: 150, sellingPrice: 350, taxRate: 18, stockQuantity: 30, minStockThreshold: 6, unit: 'Nos' },
+
+  // 6. Fasteners & Workshop Small Parts
+  { id: 69, name: 'Nut & Bolt Set', barcode: '890123456069', hsnCode: '73181500', category: 'Hardware', brand: 'SteelFast', purchasePrice: 40, sellingPrice: 100, taxRate: 18, stockQuantity: 80, minStockThreshold: 20, unit: 'Set' },
+  { id: 70, name: 'Washer Set', barcode: '890123456070', hsnCode: '73182100', category: 'Hardware', brand: 'SteelFast', purchasePrice: 25, sellingPrice: 60, taxRate: 18, stockQuantity: 80, minStockThreshold: 20, unit: 'Set' },
+  { id: 71, name: 'Screw Set', barcode: '890123456071', hsnCode: '73181400', category: 'Hardware', brand: 'SteelFast', purchasePrice: 30, sellingPrice: 75, taxRate: 18, stockQuantity: 80, minStockThreshold: 20, unit: 'Set' },
+  { id: 72, name: 'Cable Lug / Terminal', barcode: '890123456072', hsnCode: '85369090', category: 'Electrical hardware', brand: 'CopperLug', purchasePrice: 10, sellingPrice: 30, taxRate: 18, stockQuantity: 150, minStockThreshold: 30, unit: 'Nos' },
+  { id: 73, name: 'Crimp Terminal Set', barcode: '890123456073', hsnCode: '85369090', category: 'Electrical hardware', brand: 'CopperLug', purchasePrice: 50, sellingPrice: 120, taxRate: 18, stockQuantity: 60, minStockThreshold: 15, unit: 'Set' },
+  { id: 74, name: 'Wire Connector Set', barcode: '890123456074', hsnCode: '85366990', category: 'Electrical hardware', brand: 'QuickSnap', purchasePrice: 60, sellingPrice: 150, taxRate: 18, stockQuantity: 60, minStockThreshold: 15, unit: 'Set' },
+  { id: 75, name: 'Rubber Grommet', barcode: '890123456075', hsnCode: '40169990', category: 'Hardware', brand: 'FlexRubber', purchasePrice: 15, sellingPrice: 40, taxRate: 18, stockQuantity: 100, minStockThreshold: 25, unit: 'Nos' },
+  { id: 76, name: 'O-Ring Set', barcode: '890123456076', hsnCode: '40169320', category: 'Sealing', brand: 'SealRing', purchasePrice: 45, sellingPrice: 110, taxRate: 18, stockQuantity: 70, minStockThreshold: 20, unit: 'Set' },
+
+  // 7. Workshop Services
+  { id: 77, name: 'EV Full General Service & Diagnostics', barcode: '890123456077', hsnCode: '998729', category: 'Services', brand: 'In-House EV Lab', purchasePrice: 0, sellingPrice: 850, taxRate: 18, stockQuantity: 999, minStockThreshold: 1, unit: 'Nos' },
+  { id: 78, name: 'Brake Service & Overhaul', barcode: '890123456078', hsnCode: '998729', category: 'Services', brand: 'In-House EV Lab', purchasePrice: 0, sellingPrice: 350, taxRate: 18, stockQuantity: 999, minStockThreshold: 1, unit: 'Nos' },
+  { id: 79, name: 'Wiring Inspection & Electrical Diagnostics', barcode: '890123456079', hsnCode: '998729', category: 'Services', brand: 'In-House EV Lab', purchasePrice: 0, sellingPrice: 450, taxRate: 18, stockQuantity: 999, minStockThreshold: 1, unit: 'Nos' },
+  { id: 80, name: 'Fork Oil Seal Replacement Labour', barcode: '890123456080', hsnCode: '998729', category: 'Services', brand: 'In-House EV Lab', purchasePrice: 0, sellingPrice: 300, taxRate: 18, stockQuantity: 999, minStockThreshold: 1, unit: 'Nos' }
 ];
 
 const INITIAL_CUSTOMERS = [
@@ -181,11 +190,11 @@ const INITIAL_CUSTOMERS = [
   }
 ];
 
-const DATA_VERSION = 'v3';
+const DATA_VERSION = 'v5';
 
 export const DataProvider = ({ children }) => {
   if (localStorage.getItem('erp_data_version') !== DATA_VERSION) {
-    ['erp_invoices', 'erp_expenses', 'erp_audit_logs'].forEach(k => localStorage.removeItem(k));
+    ['erp_invoices', 'erp_expenses', 'erp_audit_logs', 'erp_products'].forEach(k => localStorage.removeItem(k));
     localStorage.setItem('erp_data_version', DATA_VERSION);
   }
 

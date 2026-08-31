@@ -100,59 +100,30 @@ public class BusinessErpApplication {
 
                 userRepo.saveAll(List.of(admin, owner, ownerAlt));
 
-                // 3. Seed Categories & Brands
-                Category catElectronics = categoryRepo.save(Category.builder().name("Electronics & Gadgets").tenant(tenant).build());
-                Category catGroceries = categoryRepo.save(Category.builder().name("General Supplies").tenant(tenant).build());
+                // 3. Seed Categories
+                Category catConsumables = categoryRepo.save(Category.builder().name("General Service & Consumables").tenant(tenant).build());
+                Category catBrakes = categoryRepo.save(Category.builder().name("Brakes & Wheels").tenant(tenant).build());
+                Category catElectrical = categoryRepo.save(Category.builder().name("EV Electrical & Control").tenant(tenant).build());
+                Category catMotor = categoryRepo.save(Category.builder().name("Motor & Suspension").tenant(tenant).build());
+                Category catBody = categoryRepo.save(Category.builder().name("Body & Accessories").tenant(tenant).build());
+                Category catHardware = categoryRepo.save(Category.builder().name("Fasteners & Workshop Parts").tenant(tenant).build());
+                Category catServices = categoryRepo.save(Category.builder().name("Workshop Services").tenant(tenant).build());
 
-                Brand brandSamsung = brandRepo.save(Brand.builder().name("Samsung").tenant(tenant).build());
-                Brand brandDell = brandRepo.save(Brand.builder().name("Dell").tenant(tenant).build());
+                // 4. Seed Essential EV Workshop Products
+                List<Product> evProducts = List.of(
+                        Product.builder().name("Front Brake Pad Set").barcode("890123456011").hsnCode("87141090").purchasePrice(new BigDecimal("180.00")).sellingPrice(new BigDecimal("380.00")).taxRate(new BigDecimal("18.00")).stockQuantity(40.0).minStockThreshold(10.0).unit("Pair/set").category(catBrakes).tenant(tenant).build(),
+                        Product.builder().name("Rear Brake Pad Set").barcode("890123456012").hsnCode("87141090").purchasePrice(new BigDecimal("180.00")).sellingPrice(new BigDecimal("380.00")).taxRate(new BigDecimal("18.00")).stockQuantity(40.0).minStockThreshold(10.0).unit("Pair/set").category(catBrakes).tenant(tenant).build(),
+                        Product.builder().name("BLDC Motor Controller").barcode("890123456025").hsnCode("85371000").purchasePrice(new BigDecimal("2200.00")).sellingPrice(new BigDecimal("3800.00")).taxRate(new BigDecimal("18.00")).stockQuantity(15.0).minStockThreshold(3.0).unit("Nos").category(catElectrical).tenant(tenant).build(),
+                        Product.builder().name("DC-DC Converter").barcode("890123456026").hsnCode("85044090").purchasePrice(new BigDecimal("350.00")).sellingPrice(new BigDecimal("750.00")).taxRate(new BigDecimal("18.00")).stockQuantity(25.0).minStockThreshold(5.0).unit("Nos").category(catElectrical).tenant(tenant).build(),
+                        Product.builder().name("Throttle Assembly").barcode("890123456039").hsnCode("87141090").purchasePrice(new BigDecimal("350.00")).sellingPrice(new BigDecimal("700.00")).taxRate(new BigDecimal("18.00")).stockQuantity(30.0).minStockThreshold(6.0).unit("Nos").category(catElectrical).tenant(tenant).build(),
+                        Product.builder().name("BLDC Hub Motor").barcode("890123456043").hsnCode("85013119").purchasePrice(new BigDecimal("4500.00")).sellingPrice(new BigDecimal("7500.00")).taxRate(new BigDecimal("18.00")).stockQuantity(8.0).minStockThreshold(2.0).unit("Nos").category(catMotor).tenant(tenant).build(),
+                        Product.builder().name("Front Fork Oil Seal").barcode("890123456053").hsnCode("84842000").purchasePrice(new BigDecimal("120.00")).sellingPrice(new BigDecimal("280.00")).taxRate(new BigDecimal("18.00")).stockQuantity(30.0).minStockThreshold(8.0).unit("Set").category(catMotor).tenant(tenant).build(),
+                        Product.builder().name("Chain Lubricant").barcode("890123456003").hsnCode("34031900").purchasePrice(new BigDecimal("180.00")).sellingPrice(new BigDecimal("350.00")).taxRate(new BigDecimal("18.00")).stockQuantity(30.0).minStockThreshold(5.0).unit("Bottle").category(catConsumables).tenant(tenant).build(),
+                        Product.builder().name("EV Full General Service & Diagnostics").barcode("890123456077").hsnCode("998729").purchasePrice(BigDecimal.ZERO).sellingPrice(new BigDecimal("850.00")).taxRate(new BigDecimal("18.00")).stockQuantity(999.0).minStockThreshold(1.0).unit("Nos").category(catServices).tenant(tenant).build(),
+                        Product.builder().name("Brake Service & Overhaul").barcode("890123456078").hsnCode("998729").purchasePrice(BigDecimal.ZERO).sellingPrice(new BigDecimal("350.00")).taxRate(new BigDecimal("18.00")).stockQuantity(999.0).minStockThreshold(1.0).unit("Nos").category(catServices).tenant(tenant).build()
+                );
 
-                // 4. Seed Products
-                Product p1 = Product.builder()
-                        .name("Samsung Smart Monitor 27\"")
-                        .barcode("890123456701")
-                        .hsnCode("85285200")
-                        .purchasePrice(new BigDecimal("12500.00"))
-                        .sellingPrice(new BigDecimal("16999.00"))
-                        .taxRate(new BigDecimal("18.00"))
-                        .stockQuantity(15.0)
-                        .minStockThreshold(5.0)
-                        .unit("Pcs")
-                        .category(catElectronics)
-                        .brand(brandSamsung)
-                        .tenant(tenant)
-                        .build();
-
-                Product p2 = Product.builder()
-                        .name("Dell Wireless Keyboard & Mouse Combo")
-                        .barcode("890123456702")
-                        .hsnCode("84716040")
-                        .purchasePrice(new BigDecimal("1100.00"))
-                        .sellingPrice(new BigDecimal("1599.00"))
-                        .taxRate(new BigDecimal("18.00"))
-                        .stockQuantity(3.0) // Low stock alert trigger
-                        .minStockThreshold(10.0)
-                        .unit("Pcs")
-                        .category(catElectronics)
-                        .brand(brandDell)
-                        .tenant(tenant)
-                        .build();
-
-                Product p3 = Product.builder()
-                        .name("USB-C Fast Charging Cable 2M")
-                        .barcode("890123456703")
-                        .hsnCode("85444299")
-                        .purchasePrice(new BigDecimal("180.00"))
-                        .sellingPrice(new BigDecimal("399.00"))
-                        .taxRate(new BigDecimal("18.00"))
-                        .stockQuantity(45.0)
-                        .minStockThreshold(8.0)
-                        .unit("Pcs")
-                        .category(catElectronics)
-                        .tenant(tenant)
-                        .build();
-
-                productRepo.saveAll(List.of(p1, p2, p3));
+                productRepo.saveAll(evProducts);
 
                 // 5. Seed Customers
                 Customer c1 = Customer.builder()
